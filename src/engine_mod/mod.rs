@@ -1,21 +1,18 @@
-extern crate wasm_bindgen;
-extern crate js_sys;
-extern crate web_sys;
-
 use wasm_bindgen::prelude::*;
-use wasm_bindgen::JsCast;
+use specs::{World, Builder, Entity};
 
-pub mod triangle_mod;
+pub mod rcs_mod;
 
-use self::triangle_mod::Triangle;
+use self::rcs_mod::*;
 use render_mod::Renderer;
 use timer_mod::Timer;
 
 
 // Engine
 #[wasm_bindgen]
-pub struct Engine {
-    triangle: Triangle,
+pub struct Engine<'a> {
+    world: World,
+    entities: Vec<Entity>,
     renderer: Renderer,
     timer: Timer,
 }
@@ -30,10 +27,35 @@ impl Engine {
 
         let renderer = Renderer::new()?;
 
-        let triangle = Triangle::new();
+        let mut world = World::new();
+
+        world.register::<Transform2D>();
+        world.register::<Velocity2D>();
+        world.register::<TriangleMesh>();
+
+        world.add_resource(DeltaTime(0.0));
+        world.add_resource(AddVRotation(0.0));
+
+        use std::f32::consts::PI;
+        let r = ((2.0 * PI) / 3.0) as f32;
+
+        let mut entities: Vec<Entity> = Vec::new();
+
+        entities.push(world.create_entity()
+            .with(Transform2D  { position: [0.0, 0.0, 0.0], rotation: 0.0 })
+            .with(Velocity2D   { position: [0.0, 0.0, 0.0], rotation: 1.0 })
+            .with(TriangleMesh { vertices: [
+                    0.7, 0.0, 0.0,
+                    r.cos() * 0.7, r.sin() * 0.7, 0.0,
+                    (r * 2.0).cos() * 0.7, (r * 2.0).sin() * 0.7, 0.0
+                ]})
+            .build());
+
+        world.maintain();
 
         Ok (Engine {
-            triangle,
+            world,
+            entities,
             renderer,
             timer,
         })
@@ -45,7 +67,7 @@ impl Engine {
         let delta =self.timer.tick_delta();
 
         // do stuff here
-        self.triangle.rotate(delta as f32);
+        //self.triangle.rotate(delta as f32);
 
         // the last thing we do
         self.renderer.draw(&self.triangle)

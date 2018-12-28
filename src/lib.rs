@@ -2,6 +2,7 @@
 extern crate wasm_bindgen;
 extern crate js_sys;
 extern crate web_sys;
+extern crate specs;
 
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -41,7 +42,7 @@ pub fn run() -> Result<(), JsValue> {
 
     *g.borrow_mut() = Some(Closure::wrap(Box::new(move || {
 
-        engine.tick().expect("failed to tick engine");;
+        engine.tick().expect("failed to tick engine");
 
         // Schedule ourselves for another requestAnimationFrame callback.
         request_animation_frame(f.borrow().as_ref().unwrap());
