@@ -1,9 +1,13 @@
 use wasm_bindgen::prelude::*;
 use specs::{World, Builder, Entity};
 
-pub mod rcs_mod;
+pub mod components;
+pub mod resources;
+pub mod systems;
 
-use self::rcs_mod::*;
+use self::components::*;
+use self::resources::*;
+use self::systems::*;
 use render_mod::Renderer;
 use timer_mod::Timer;
 

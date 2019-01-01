@@ -1,54 +1,15 @@
-//
-// Where all the resources, components, and systems will be defined
-//
-// TODO: split into separate files: resources_mod.rs, components_mod.rs, systems_mod.rs
 
-use specs::{Component, VecStorage, Read, ReadStorage, WriteStorage, System};
+use specs::{Read, ReadStorage, WriteStorage, System};
 
-// resources
-#[derive(Default)]
-pub struct DeltaTime(pub f32);
-#[derive(Default)]
-pub struct AddVRotation(pub f32); // this is temp, TODO make this input
-
-// components
-#[derive(Default)]
-pub struct Transform2D {
-    pub position: [f32; 3],
-    pub rotation: f32,
-}
-
-impl Component for Transform2D {
-    type Storage = VecStorage<Self>;
-}
-
-#[derive(Default)]
-pub struct Velocity2D {
-    pub position: [f32; 3],
-    pub rotation: f32,
-}
-
-impl Component for Velocity2D {
-    type Storage = VecStorage<Self>;
-}
-
-#[derive(Default)]
-pub struct TriangleMesh {
-    pub vertices: [f32; 9],
-}
-
-impl Component for TriangleMesh {
-    type Storage = VecStorage<Self>;
-}
-
-
+use engine_mod::components::*;
+use engine_mod::resources::*;
 
 // systems
 pub struct UpdatePosition2D;
 
 impl<'a> System<'a> for UpdatePosition2D {
     type SystemData = (Read<'a, DeltaTime>, WriteStorage<'a, Transform2D>, ReadStorage<'a, Velocity2D>,
-    WriteStorage<'a, TriangleMesh>);
+                       WriteStorage<'a, TriangleMesh>);
 
     fn run(&mut self, (delta, mut pos, vel, mut tri): Self::SystemData) {
         use specs::Join;

@@ -4,7 +4,9 @@ use wasm_bindgen::JsCast;
 use web_sys::{WebGlProgram, WebGlRenderingContext, WebGlShader};
 use specs::{World, Join};
 
-use engine_mod::rcs_mod;
+use engine_mod::components;
+use engine_mod::resources;
+use engine_mod::systems;
 
 pub struct Renderer {
     context: web_sys::WebGlRenderingContext,
@@ -57,7 +59,7 @@ impl Renderer {
 
         let mut vertices: Vec<f32> = Vec::new();
 
-        let triangle_storage = world.read_storage::<rcs_mod::TriangleMesh>();
+        let triangle_storage = world.read_storage::<components::TriangleMesh>();
 
         for mesh in (&triangle_storage).join() {
             for vert in &mesh.vertices {
