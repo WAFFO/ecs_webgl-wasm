@@ -2,8 +2,9 @@ use js_sys::WebAssembly;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use web_sys::{WebGlProgram, WebGlRenderingContext, WebGlShader};
+use specs::{World, Join};
 
-use engine_mod::triangle_mod::Triangle;
+use engine_mod::rcs_mod;
 
 pub struct Renderer {
     context: web_sys::WebGlRenderingContext,
@@ -52,9 +53,19 @@ impl Renderer {
         })
     }
 
-    pub fn draw(&mut self, triangle: &Triangle) -> Result<(), JsValue> {
+    pub fn draw(&mut self, world: &World) -> Result<(), JsValue> {
 
-        let vertices = triangle.get_vertices();
+        let mut vertices: Vec<f32> = Vec::new();
+
+        let triangle_storage = world.read_storage::<rcs_mod::TriangleMesh>();
+
+        for mesh in (&triangle_storage).join() {
+            for vert in &mesh.vertices {
+                vertices.push(*vert);
+            }
+        }
+
+        let vertices = vertices.as_slice();
 
         // Get the buffer out of WebAssembly memory
         let memory_buffer = wasm_bindgen::memory()
