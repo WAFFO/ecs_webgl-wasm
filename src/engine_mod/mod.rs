@@ -69,11 +69,13 @@ impl Engine {
         world.add_resource(DeltaTime(0.0));
         world.add_resource(AddVRotation(0.0));
 
-        entities.push(triangle(&mut world, 0.3, 0.3, 0.25, (0.0, 0.0, 1.0)));
-
-        entities.push(triangle(&mut world, -0.3, 0.3, 0.25, (0.0, 0.0, 2.0)));
-
-        entities.push(triangle(&mut world, 0.3, -0.3, 0.25, (0.0, 0.0, -1.0)));
+        for i in 0..9 {
+            entities.push(triangle(&mut world,
+                                   (i as f32%3.0-1.0)*0.5,
+                                   ((i/3) as f32%3.0-1.0)*0.5,
+                                   0.25,
+                                   (0.0, 0.0, if i==4{-1.0}else{1.0})));
+        }
 
         world.maintain();
 
