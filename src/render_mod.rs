@@ -5,8 +5,6 @@ use web_sys::{WebGlProgram, WebGlRenderingContext, WebGlShader};
 use specs::{World, Join};
 
 use engine_mod::components;
-use engine_mod::resources;
-use engine_mod::systems;
 
 pub struct Renderer {
     context: web_sys::WebGlRenderingContext,

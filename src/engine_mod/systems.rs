@@ -25,11 +25,14 @@ impl<'a> System<'a> for UpdatePosition2D {
             use std::f32::consts::PI;
             let a = pos.rotation;
             let r = ((2.0 * PI) / 3.0) as f32;
-            // return the vertices of our triangle
+            let s = pos.size;
+            let x = pos.position[0];
+            let y = pos.position[1];
+                // set the vertices of our triangle
             (*tri).vertices = [
-                a.cos() * 0.5, a.sin() * 0.5, 0.0,
-                (a + r).cos() * 0.5, (a + r).sin() * 0.5, 0.0,
-                (a + r * 2.0).cos() * 0.5, (a + r * 2.0).sin() * 0.5, 0.0
+                            x + a.cos() * s,             y + a.sin() * s, 0.0,
+                      x + (a + r).cos() * s,       y + (a + r).sin() * s, 0.0,
+                x + (a + r * 2.0).cos() * s, y + (a + r * 2.0).sin() * s, 0.0,
             ];
         }
     }
