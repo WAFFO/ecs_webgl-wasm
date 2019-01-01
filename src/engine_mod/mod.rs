@@ -1,11 +1,13 @@
 use wasm_bindgen::prelude::*;
-use specs::{World, Builder, Entity};
+use specs::{World, Entity};
 
 pub mod components;
+pub mod entities;
 pub mod resources;
 pub mod systems;
 
 use self::components::*;
+use self::entities::*;
 use self::resources::*;
 use self::systems::*;
 use render_mod::Renderer;
@@ -67,18 +69,11 @@ impl Engine {
         world.add_resource(DeltaTime(0.0));
         world.add_resource(AddVRotation(0.0));
 
-        use std::f32::consts::PI;
-        let r = ((2.0 * PI) / 3.0) as f32;
+        entities.push(triangle(&mut world, 0.3, 0.3, 0.25, (0.0, 0.0, 1.0)));
 
-        entities.push(world.create_entity()
-            .with(Transform2D  { position: [0.0, 0.0, 0.0], rotation: 0.0 })
-            .with(Velocity2D   { position: [0.0, 0.0, 0.0], rotation: 1.0 })
-            .with(TriangleMesh { vertices: [
-                0.5, 0.0, 0.0,
-                r.cos() * 0.5, r.sin() * 0.5, 0.0,
-                (r * 2.0).cos() * 0.5, (r * 2.0).sin() * 0.5, 0.0
-            ]})
-            .build());
+        entities.push(triangle(&mut world, -0.3, 0.3, 0.25, (0.0, 0.0, 2.0)));
+
+        entities.push(triangle(&mut world, 0.3, -0.3, 0.25, (0.0, 0.0, -1.0)));
 
         world.maintain();
 
