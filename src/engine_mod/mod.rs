@@ -47,7 +47,7 @@ impl Engine {
         {
             // first tick delta time
             let mut _delta = self.world.write_resource::<DeltaTime>();
-            *_delta = DeltaTime(self.timer.tick_delta() as f32);
+            _delta.0 = self.timer.tick_delta() as f32;
         }
 
         // do stuff here
@@ -74,7 +74,7 @@ impl Engine {
                                    (i as f32%3.0-1.0)*0.5,
                                    ((i/3) as f32%3.0-1.0)*0.5,
                                    0.25,
-                                   (0.0, 0.0, if i==4{-1.0}else{1.0})));
+                                   (0.0, 0.0, if i==4{-2.0}else{1.0})));
         }
 
         world.maintain();
