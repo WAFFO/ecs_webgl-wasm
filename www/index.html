@@ -6,13 +6,15 @@ body {
   margin: 0;
 }
 canvas {
-  width: 100vw;
-  height: 100vw;
-  display: block;
-  object-fit: contain;
-  position: relative;
-  top: 50%;
-  transform: translateY(-50%);
+  width: 100vw; 
+  height: 100vw; /* height:width ratio = 9/16 = .5625  */
+  background: pink;
+  max-height: 100vh;
+  max-width: 100vh; /* 16/9 = 1.778 */
+  margin: auto;
+  position: absolute;
+  top:0;bottom:0; /* vertical center */
+  left:0;right:0; /* horizontal center */
 }
 </style>
   </head>
