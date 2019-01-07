@@ -1,13 +1,19 @@
 use js_sys::WebAssembly;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
-use web_sys::{WebGlProgram, WebGlRenderingContext, WebGlShader};
+use web_sys::{WebGlProgram, WebGlRenderingContext, WebGlShader, WebGlUniformLocation, WebGlBuffer};
 use specs::{World, Join};
+use glm;
+use glm::Vec3;
 
 use engine_mod::components;
 
 pub struct Renderer {
+    attribute: (u32, u32),
+    buffer: (web_sys::WebGlBuffer, web_sys::WebGlBuffer),
     context: web_sys::WebGlRenderingContext,
+    canvas: web_sys::HtmlCanvasElement,
+    uniform: Vec<WebGlUniformLocation>,
 }
 
 impl Renderer {
@@ -39,33 +45,50 @@ impl Renderer {
         let program = Renderer::link_program(&context, [vert_shader, frag_shader].iter())?;
         context.use_program(Some(&program));
 
+        // positions in the shader
+        let mut attribute: (u32, u32) = (0, 0);
+        attribute.0 = context.get_attrib_location(&program, "a_position") as u32;
+        attribute.1 = context.get_attrib_location(&program, "a_color") as u32;
+
         // Attributes in shaders come from buffers, first get the buffer
         let buffer = context.create_buffer().ok_or("failed to create a buffer")?;
         context.bind_buffer(WebGlRenderingContext::ARRAY_BUFFER, Some(&buffer));
-        // Bind buffer to generic vertex attribute of the current vertex buffer object
-        context.vertex_attrib_pointer_with_i32(0, 3, WebGlRenderingContext::FLOAT, false, 0, 0);
-        // Attributes need to be enabled before use (could just use 0 since we know it's first)
-        context.enable_vertex_attrib_array(context.get_attrib_location(&program, "position") as u32);
+
+        // color stuff
+        let color_buffer = context.create_buffer().ok_or("failed to create a buffer")?;
+        context.bind_buffer(WebGlRenderingContext::ARRAY_BUFFER, Some(&buffer));
+
+        // Get uniform variable locations from our shaders
+        let mut uniform : Vec<WebGlUniformLocation> = Vec::new();
+        uniform.push(
+            context.get_uniform_location(&program, "u_matrix")
+                .expect("Could not find u_matrix.")
+        );
 
         // Return our WebGL object
         Ok(Renderer {
+            attribute,
+            buffer: (buffer, color_buffer),
             context,
+            canvas,
+            uniform,
         })
     }
 
     pub fn draw(&mut self, world: &World) -> Result<(), JsValue> {
 
-        let mut vertices: Vec<f32> = Vec::new();
-
-        let triangle_storage = world.read_storage::<components::TriangleMesh>();
-
-        for mesh in (&triangle_storage).join() {
-            for vert in &mesh.vertices {
-                vertices.push(*vert);
-            }
-        }
-
+        let mut matrix = self.build_matrix();
+        let mut matrix = glm::value_ptr_mut(&mut matrix);
+        let vertices = self.build_vertices(world);
         let vertices = vertices.as_slice();
+        let color_vertices = self.build_colors(world);
+        let color_vertices = color_vertices.as_slice();
+
+        // set resolution to the canvas
+        Renderer::resize_canvas_to_display_size(&mut self.canvas);
+        self.context.viewport(0, 0, self.canvas.width() as i32, self.canvas.width() as i32);
+        // u_matrix (vertex)
+        self.context.uniform_matrix4fv_with_f32_array(Some(&self.uniform[0]), false, &mut matrix);
 
         // Get the buffer out of WebAssembly memory
         let memory_buffer = wasm_bindgen::memory()
@@ -75,13 +98,36 @@ impl Renderer {
         let vertices_location = vertices.as_ptr() as u32 / 4;
         let vert_array = js_sys::Float32Array::new(&memory_buffer)
             .subarray(vertices_location, vertices_location + vertices.len() as u32);
+        let colors_location = color_vertices.as_ptr() as u32 / 4;
+        let color_array = js_sys::Float32Array::new(&memory_buffer)
+            .subarray(colors_location, colors_location + color_vertices.len() as u32);
 
+        // start of vertex binding
+        self.context.bind_buffer(WebGlRenderingContext::ARRAY_BUFFER, Some(&self.buffer.0));
+        // Bind buffer to generic vertex attribute of the current vertex buffer object
+        self.context.vertex_attrib_pointer_with_i32(self.attribute.0, 3, WebGlRenderingContext::FLOAT, false, 0, 0);
         // Buffer_data will copy the data to the GPU memory
         self.context.buffer_data_with_array_buffer_view(
             WebGlRenderingContext::ARRAY_BUFFER,
             &vert_array,
             WebGlRenderingContext::STATIC_DRAW,
         );
+        // Attributes need to be enabled before use
+        self.context.enable_vertex_attrib_array(self.attribute.0);
+
+
+        // start of color binding
+        self.context.bind_buffer(WebGlRenderingContext::ARRAY_BUFFER, Some(&self.buffer.1));
+        // Bind buffer to generic vertex attribute of the current vertex buffer object
+        self.context.vertex_attrib_pointer_with_i32(self.attribute.1, 3, WebGlRenderingContext::FLOAT, false, 0, 0);
+        // Buffer_data will copy the data to the GPU memory
+        self.context.buffer_data_with_array_buffer_view(
+            WebGlRenderingContext::ARRAY_BUFFER,
+            &color_array,
+            WebGlRenderingContext::STATIC_DRAW,
+        );
+        // Attributes need to be enabled before use
+        self.context.enable_vertex_attrib_array(self.attribute.1);
 
         // Draw over the entire canvas and clear buffer to ur present one
         self.context.clear_color(0.9, 0.9, 0.9, 1.0);
@@ -142,5 +188,58 @@ impl Renderer {
                 .get_program_info_log(&program)
                 .unwrap_or_else(|| "Unknown error creating program object".into()))
         }
+    }
+
+    fn resize_canvas_to_display_size(canvas: &mut web_sys::HtmlCanvasElement) {
+        let w = canvas.client_width() as u32;
+        let h = canvas.client_height() as u32;
+        if canvas.width() != w || canvas.height() != h {
+            canvas.set_width(w);
+            canvas.set_height(h);
+        }
+    }
+
+    pub fn build_matrix(&self) -> glm::Mat4 {
+
+        let projection =
+            glm::perspective(1.0, 45.0, 0.1, 100.0);
+        let view =
+            glm::look_at(
+                &glm::vec3(4.0,3.0,3.0),
+                &glm::vec3(0.0, 0.0, 0.0),
+                &glm::vec3(0.0, 1.0, 0.0),
+            );
+
+        let matrix = projection * view * glm::Mat4::identity();
+
+        matrix
+    }
+
+    fn build_vertices(&self, world: &World) -> Vec<f32> {
+        let mut vec: Vec<f32> = Vec::new();
+
+        let _mesh_storage = world.read_storage::<components::StaticMesh>();
+
+        for mesh in (&_mesh_storage).join() {
+            for vertex in &mesh.vertices {
+                vec.push(*vertex);
+            }
+        }
+
+        vec
+    }
+
+    fn build_colors(&self, world: &World) -> Vec<f32> {
+        let mut vec: Vec<f32> = Vec::new();
+
+        let _mesh_storage = world.read_storage::<components::StaticColorMesh>();
+
+        for mesh in (&_mesh_storage).join() {
+            for vertex in &mesh.vertices {
+                vec.push(*vertex);
+            }
+        }
+
+        vec
     }
 }

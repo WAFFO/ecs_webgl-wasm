@@ -3,12 +3,17 @@ extern crate wasm_bindgen;
 extern crate js_sys;
 extern crate web_sys;
 extern crate specs;
+extern crate nalgebra_glm as glm;
 
 use std::cell::RefCell;
 use std::rc::Rc;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use std::panic;
+
+// Testing (tests.rs)
+#[cfg(test)]
+mod tests;
 
 // My stuff
 pub mod engine_mod;
