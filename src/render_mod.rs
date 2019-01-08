@@ -72,6 +72,9 @@ impl Renderer {
         // Cull triangles (counter-clockwise = front facing)
         context.enable(WebGlRenderingContext::CULL_FACE);
 
+        // Test Depth
+        context.enable(WebGlRenderingContext::DEPTH_TEST);
+
         // Return our WebGL object
         Ok(Renderer {
             attribute,
@@ -86,7 +89,7 @@ impl Renderer {
 
         // Draw over the entire canvas and clear buffer to ur present one
         self.context.clear_color(0.9, 0.9, 0.9, 1.0);
-        self.context.clear(WebGlRenderingContext::COLOR_BUFFER_BIT);
+        self.context.clear(WebGlRenderingContext::COLOR_BUFFER_BIT | WebGlRenderingContext::DEPTH_BUFFER_BIT);
 
         let vertices = self.build_vertices(world);
         let vertices = vertices.as_slice();
