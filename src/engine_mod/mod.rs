@@ -78,6 +78,14 @@ impl Engine {
             )
         );
 
+        entities.push(
+            test_3d(&mut world,
+                vec3( -7.0, 0.0, -1.0 ),
+                1.0,
+                vec3( 0.0, 0.0, -0.45 ),
+            )
+        );
+
         world.maintain();
 
         world
