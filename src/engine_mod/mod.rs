@@ -1,5 +1,6 @@
 use wasm_bindgen::prelude::*;
 use specs::{World, Entity};
+use glm::{Vec3, vec3};
 
 pub mod components;
 pub mod entities;
@@ -51,9 +52,9 @@ impl Engine {
         }
 
         // do stuff here
-//        use specs::RunNow;
-//        let mut tick = UpdatePosition;
-//        tick.run_now(&self.world.res);
+        use specs::RunNow;
+        let mut tick = UpdatePosition;
+        tick.run_now(&self.world.res);
 
         // the last thing we do
         self.renderer.draw(&self.world)
@@ -71,9 +72,9 @@ impl Engine {
 
         entities.push(
             test_3d(&mut world,
-                [0.0, 0.0, 0.0, 0.0],
+                vec3( 0.0, 0.0, 0.0 ),
                 1.0,
-                [0.1, 0.1, 0.1, 0.0],
+                vec3( 0.4, 0.4, 0.2 ),
             )
         );
 

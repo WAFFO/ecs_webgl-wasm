@@ -4,7 +4,7 @@ use wasm_bindgen::JsCast;
 use web_sys::{WebGlProgram, WebGlRenderingContext, WebGlShader, WebGlUniformLocation, WebGlBuffer};
 use specs::{World, Join};
 use glm;
-use glm::Vec3;
+use glm::{Vec3, vec3};
 
 use engine_mod::components;
 
@@ -56,14 +56,21 @@ impl Renderer {
 
         // color stuff
         let color_buffer = context.create_buffer().ok_or("failed to create a buffer")?;
-        context.bind_buffer(WebGlRenderingContext::ARRAY_BUFFER, Some(&buffer));
+        context.bind_buffer(WebGlRenderingContext::ARRAY_BUFFER, Some(&color_buffer));
 
         // Get uniform variable locations from our shaders
         let mut uniform : Vec<WebGlUniformLocation> = Vec::new();
         uniform.push(
+            context.get_uniform_location(&program, "u_camera")
+            .expect("Could not find u_camera.")
+        );
+        uniform.push(
             context.get_uniform_location(&program, "u_matrix")
                 .expect("Could not find u_matrix.")
         );
+
+        // Cull triangles (counter-clockwise = front facing)
+        context.enable(WebGlRenderingContext::CULL_FACE);
 
         // Return our WebGL object
         Ok(Renderer {
@@ -77,8 +84,10 @@ impl Renderer {
 
     pub fn draw(&mut self, world: &World) -> Result<(), JsValue> {
 
-        let mut matrix = self.build_matrix();
-        let mut matrix = glm::value_ptr_mut(&mut matrix);
+        // Draw over the entire canvas and clear buffer to ur present one
+        self.context.clear_color(0.9, 0.9, 0.9, 1.0);
+        self.context.clear(WebGlRenderingContext::COLOR_BUFFER_BIT);
+
         let vertices = self.build_vertices(world);
         let vertices = vertices.as_slice();
         let color_vertices = self.build_colors(world);
@@ -87,8 +96,6 @@ impl Renderer {
         // set resolution to the canvas
         Renderer::resize_canvas_to_display_size(&mut self.canvas);
         self.context.viewport(0, 0, self.canvas.width() as i32, self.canvas.width() as i32);
-        // u_matrix (vertex)
-        self.context.uniform_matrix4fv_with_f32_array(Some(&self.uniform[0]), false, &mut matrix);
 
         // Get the buffer out of WebAssembly memory
         let memory_buffer = wasm_bindgen::memory()
@@ -129,16 +136,14 @@ impl Renderer {
         // Attributes need to be enabled before use
         self.context.enable_vertex_attrib_array(self.attribute.1);
 
-        // Draw over the entire canvas and clear buffer to ur present one
-        self.context.clear_color(0.9, 0.9, 0.9, 1.0);
-        self.context.clear(WebGlRenderingContext::COLOR_BUFFER_BIT);
+        // camera
+        let mut camera = self.build_camera();
+        let mut camera = glm::value_ptr_mut(&mut camera);
 
-        // Draw our shape (Triangles, offset, count) Our vertex shader will run <count> times.
-        self.context.draw_arrays(
-            WebGlRenderingContext::TRIANGLES,
-            0,
-            (vertices.len() / 3) as i32,
-        );
+        // u_camera
+        self.context.uniform_matrix4fv_with_f32_array(Some(&self.uniform[0]), false, &mut camera);
+
+        self.draw_arrays(world, (vertices.len() / 3) as i32);
 
         Ok(())
     }
@@ -199,20 +204,52 @@ impl Renderer {
         }
     }
 
-    pub fn build_matrix(&self) -> glm::Mat4 {
+    pub fn build_camera(&self) -> glm::Mat4 {
 
-        let projection =
+        let perspective =
             glm::perspective(1.0, 45.0, 0.1, 100.0);
         let view =
             glm::look_at(
-                &glm::vec3(4.0,3.0,3.0),
-                &glm::vec3(0.0, 0.0, 0.0),
-                &glm::vec3(0.0, 1.0, 0.0),
+                &vec3(4.0,3.0,3.0),
+                &vec3(0.0, 0.0, 0.0),
+                &vec3(0.0, 1.0, 0.0),
             );
 
-        let matrix = projection * view * glm::Mat4::identity();
+        let matrix = perspective * view * glm::Mat4::identity();
 
         matrix
+    }
+
+    pub fn build_matrices(&self, world: &World) -> Vec<glm::Mat4> {
+        let mut matrices: Vec<glm::Mat4> = Vec::new();
+
+        let _transform_storage = world.read_storage::<components::Transform>();
+
+        for transform in (&_transform_storage).join() {
+            let matrix = glm::translate(
+                &glm::Mat4::identity(),
+                &transform.translation,
+            );
+            let matrix = glm::rotate_x(
+                &matrix,
+                transform.rotation[0],
+            );
+            let matrix = glm::rotate_y(
+                &matrix,
+                transform.rotation[1],
+            );
+            let matrix = glm::rotate_z(
+                &matrix,
+                transform.rotation[2],
+            );
+            let matrix = glm::scale(
+                &matrix,
+                &transform.scale,
+            );
+            matrices.push(matrix);
+        }
+
+        matrices
     }
 
     fn build_vertices(&self, world: &World) -> Vec<f32> {
@@ -224,6 +261,9 @@ impl Renderer {
             for vertex in &mesh.vertices {
                 vec.push(*vertex);
             }
+            // we actually only need one mesh for now (until we add more variety)
+            // TODO: actually manage a vertex memory space !!
+            break;
         }
 
         vec
@@ -238,8 +278,29 @@ impl Renderer {
             for vertex in &mesh.vertices {
                 vec.push(*vertex);
             }
+            // we actually only need one mesh for now (until we add more variety)
+            // TODO: actually manage a vertex memory space !!
+            break;
         }
 
         vec
+    }
+
+    fn draw_arrays(&self, world: &World, size: i32){
+        let mut matrices = self.build_matrices(world);
+
+        for mut matrix in matrices {
+            let mut _matrix_ptr = glm::value_ptr_mut(&mut matrix);
+
+            // u_matrix
+            self.context.uniform_matrix4fv_with_f32_array(Some(&self.uniform[1]), false, &mut _matrix_ptr);
+
+            // Draw our shape (Triangles, offset, count) Our vertex shader will run <count> times.
+            self.context.draw_arrays(
+                WebGlRenderingContext::TRIANGLES,
+                0,
+                size,
+            );
+        }
     }
 }

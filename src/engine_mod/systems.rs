@@ -17,10 +17,14 @@ impl<'a> System<'a> for UpdatePosition {
         let delta = delta.0;
 
         for (pos, vel) in (&mut pos, &vel).join() {
-            // TODO fill this out
+            pos.translation += vel.translation * delta;
+            pos.rotation += vel.rotation * delta;
         }
     }
 }
+
+
+// !! probably a cancelled idea !! //
 
 pub struct RenderSystem;
 

@@ -1,12 +1,13 @@
 
 use specs::{World, Builder, Entity};
+use glm::{Vec3, vec3};
 
 use engine_mod::components::*;
 
-pub fn test_3d(world: &mut World, translation: [f32;4], scale: f32, rotation: [f32; 4]) -> Entity {
+pub fn test_3d(world: &mut World, translation: Vec3, scale: f32, rotation: Vec3) -> Entity {
     world.create_entity()
-        .with(Transform  { translation, rotation: [ 0.0, 0.0, 0.0, 0.0 ], scale: [ scale, scale, scale, 0.0 ] })
-        .with(Velocity   { translation: [ 0.0, 0.0, 0.0, 0.0 ], rotation })
+        .with(Transform  { translation, rotation: vec3( 0.0, 0.0, 0.0 ), scale: vec3(scale, scale, scale) })
+        .with(Velocity   { translation: vec3( 0.0, 0.0, 0.0 ), rotation })
         .with(StaticMesh { vertices: vec![
             -1.0,-1.0,-1.0, // triangle 1 : begin
             -1.0,-1.0, 1.0,

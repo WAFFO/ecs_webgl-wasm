@@ -1,27 +1,48 @@
 
 use specs::{Component, VecStorage};
+use glm::{Vec3, vec3};
+
 
 // components
-#[derive(Default)]
 pub struct Transform {
-    pub translation: [f32; 4],
-    pub rotation: [f32; 4],
-    pub scale: [f32; 4],
+    pub translation: Vec3,
+    pub rotation: Vec3,
+    pub scale: Vec3,
 }
 
 impl Component for Transform {
     type Storage = VecStorage<Self>;
 }
 
-#[derive(Default)]
+impl Default for Transform {
+    fn default() -> Transform {
+        Transform {
+            translation: vec3(0.0, 0.0, 0.0),
+            rotation: vec3(0.0, 0.0, 0.0),
+            scale: vec3(0.0, 0.0, 0.0),
+        }
+    }
+}
+
 pub struct Velocity {
-    pub translation: [f32; 4],
-    pub rotation: [f32; 4],
+    pub translation: Vec3,
+    pub rotation: Vec3,
 }
 
 impl Component for Velocity {
     type Storage = VecStorage<Self>;
 }
+
+impl Default for Velocity {
+    fn default() -> Velocity {
+        Velocity {
+            translation: vec3(0.0, 0.0, 0.0),
+            rotation: vec3(0.0, 0.0, 0.0),
+        }
+    }
+}
+
+// TODO: impl std::ops::Add for Transform + Velocity
 
 #[derive(Default)]
 pub struct StaticMesh {
