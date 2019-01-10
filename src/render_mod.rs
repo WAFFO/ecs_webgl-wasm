@@ -207,7 +207,7 @@ impl Renderer {
         }
     }
 
-    pub fn build_camera(&self) -> glm::Mat4 {
+    fn build_camera(&self) -> glm::Mat4 {
 
         let perspective =
             glm::perspective(1.0, 45.0, 0.1, 100.0);
@@ -223,7 +223,7 @@ impl Renderer {
         matrix
     }
 
-    pub fn build_matrices(&self, world: &World) -> Vec<glm::Mat4> {
+    fn build_matrices(&self, world: &World) -> Vec<glm::Mat4> {
         let mut matrices: Vec<glm::Mat4> = Vec::new();
 
         let _transform_storage = world.read_storage::<components::Transform>();
