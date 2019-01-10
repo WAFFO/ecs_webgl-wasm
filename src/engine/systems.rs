@@ -1,8 +1,8 @@
 
 use specs::{Read, ReadStorage, WriteStorage, System};
 
-use engine_mod::components::*;
-use engine_mod::resources::*;
+use engine::components::*;
+use engine::resources::*;
 
 // systems
 pub struct UpdatePosition;

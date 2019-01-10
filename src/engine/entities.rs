@@ -2,7 +2,7 @@
 use specs::{World, Builder, Entity};
 use glm::{Vec3, vec3};
 
-use engine_mod::components::*;
+use engine::components::*;
 
 pub fn test_3d(world: &mut World, translation: Vec3, scale: f32, rotation: Vec3) -> Entity {
     world.create_entity()

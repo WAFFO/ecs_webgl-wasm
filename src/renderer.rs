@@ -6,7 +6,7 @@ use specs::{World, Join};
 use glm;
 use glm::{Vec3, vec3};
 
-use engine_mod::components;
+use engine::components;
 
 pub struct Renderer {
     attribute: (u32, u32),

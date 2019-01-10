@@ -20,7 +20,7 @@ pub mod engine;
 pub mod renderer;
 pub mod timer;
 
-use engine_mod::Engine;
+use engine::Engine;
 
 // JS STUFF
 fn window() -> web_sys::Window {
