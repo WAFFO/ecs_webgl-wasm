@@ -1,4 +1,4 @@
-use render_mod::Renderer;
+use renderer::Renderer;
 
 use glm;
 use glm::Vec3;

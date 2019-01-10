@@ -11,8 +11,8 @@ use self::components::*;
 use self::entities::*;
 use self::resources::*;
 use self::systems::*;
-use render_mod::Renderer;
-use timer_mod::Timer;
+use renderer::Renderer;
+use timer::Timer;
 
 
 // Engine

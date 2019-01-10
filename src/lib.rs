@@ -16,9 +16,9 @@ use std::panic;
 mod tests;
 
 // My stuff
-pub mod engine_mod;
-pub mod render_mod;
-pub mod timer_mod;
+pub mod engine;
+pub mod renderer;
+pub mod timer;
 
 use engine_mod::Engine;
 
