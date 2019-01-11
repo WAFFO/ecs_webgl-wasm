@@ -47,18 +47,11 @@ impl Default for Velocity {
 #[derive(Default)]
 pub struct StaticMesh {
     pub vertices: Vec<f32>,
+    pub colors: Vec<f32>,
+    pub indices: Vec<u16>,
 }
 
 impl Component for StaticMesh {
-    type Storage = VecStorage<Self>;
-}
-
-#[derive(Default)]
-pub struct StaticColorMesh {
-    pub vertices: Vec<f32>,
-}
-
-impl Component for StaticColorMesh {
     type Storage = VecStorage<Self>;
 }
 

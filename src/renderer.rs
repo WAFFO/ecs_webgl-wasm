@@ -10,7 +10,7 @@ use engine::components;
 
 pub struct Renderer {
     attribute: (u32, u32),
-    buffer: (web_sys::WebGlBuffer, web_sys::WebGlBuffer),
+    buffer: (web_sys::WebGlBuffer, web_sys::WebGlBuffer, web_sys::WebGlBuffer),
     context: web_sys::WebGlRenderingContext,
     canvas: web_sys::HtmlCanvasElement,
     uniform: Vec<WebGlUniformLocation>,
@@ -51,12 +51,16 @@ impl Renderer {
         attribute.1 = context.get_attrib_location(&program, "a_color") as u32;
 
         // Attributes in shaders come from buffers, first get the buffer
-        let buffer = context.create_buffer().ok_or("failed to create a buffer")?;
+        let buffer = context.create_buffer().ok_or("failed to create a vertex buffer")?;
         context.bind_buffer(WebGlRenderingContext::ARRAY_BUFFER, Some(&buffer));
 
-        // color stuff
-        let color_buffer = context.create_buffer().ok_or("failed to create a buffer")?;
+        // color buffer
+        let color_buffer = context.create_buffer().ok_or("failed to create a color buffer")?;
         context.bind_buffer(WebGlRenderingContext::ARRAY_BUFFER, Some(&color_buffer));
+
+        // index buffer
+        let index_buffer = context.create_buffer().ok_or("failed to create an index buffer")?;
+        context.bind_buffer(WebGlRenderingContext::ELEMENT_ARRAY_BUFFER, Some(&index_buffer));
 
         // Get uniform variable locations from our shaders
         let mut uniform : Vec<WebGlUniformLocation> = Vec::new();
@@ -78,7 +82,7 @@ impl Renderer {
         // Return our WebGL object
         Ok(Renderer {
             attribute,
-            buffer: (buffer, color_buffer),
+            buffer: (buffer, color_buffer, index_buffer),
             context,
             canvas,
             uniform,
@@ -91,10 +95,10 @@ impl Renderer {
         self.context.clear_color(0.9, 0.9, 0.9, 1.0);
         self.context.clear(WebGlRenderingContext::COLOR_BUFFER_BIT | WebGlRenderingContext::DEPTH_BUFFER_BIT);
 
-        let vertices = self.build_vertices(world);
+        let (vertices, colors, indices) = self.build_vertices(world);
         let vertices = vertices.as_slice();
-        let color_vertices = self.build_colors(world);
-        let color_vertices = color_vertices.as_slice();
+        let colors = colors.as_slice();
+        let indices = indices.as_slice();
 
         // set resolution to the canvas
         Renderer::resize_canvas_to_display_size(&mut self.canvas);
@@ -108,9 +112,12 @@ impl Renderer {
         let vertices_location = vertices.as_ptr() as u32 / 4;
         let vert_array = js_sys::Float32Array::new(&memory_buffer)
             .subarray(vertices_location, vertices_location + vertices.len() as u32);
-        let colors_location = color_vertices.as_ptr() as u32 / 4;
+        let colors_location = colors.as_ptr() as u32 / 4;
         let color_array = js_sys::Float32Array::new(&memory_buffer)
-            .subarray(colors_location, colors_location + color_vertices.len() as u32);
+            .subarray(colors_location, colors_location + colors.len() as u32);
+        let indices_location = indices.as_ptr() as u32 / 4;
+        let index_array = js_sys::Uint16Array::new(&memory_buffer)
+            .subarray(indices_location, indices_location + indices.len() as u32);
 
         // start of vertex binding
         self.context.bind_buffer(WebGlRenderingContext::ARRAY_BUFFER, Some(&self.buffer.0));
@@ -139,6 +146,16 @@ impl Renderer {
         // Attributes need to be enabled before use
         self.context.enable_vertex_attrib_array(self.attribute.1);
 
+
+        // start of index binding
+        self.context.bind_buffer(WebGlRenderingContext::ELEMENT_ARRAY_BUFFER, Some(&self.buffer.2));
+        // Buffer_data will copy the data to the GPU memory
+        self.context.buffer_data_with_array_buffer_view(
+            WebGlRenderingContext::ELEMENT_ARRAY_BUFFER,
+            &index_array,
+            WebGlRenderingContext::STATIC_DRAW,
+        );
+
         // camera
         let mut camera = self.build_camera();
         let mut camera = glm::value_ptr_mut(&mut camera);
@@ -146,7 +163,7 @@ impl Renderer {
         // u_camera
         self.context.uniform_matrix4fv_with_f32_array(Some(&self.uniform[0]), false, &mut camera);
 
-        self.draw_arrays(world, (vertices.len() / 3) as i32);
+        self.draw_elements(world, 36);//(vertices.len() / 3) as i32);
 
         Ok(())
     }
@@ -255,41 +272,32 @@ impl Renderer {
         matrices
     }
 
-    fn build_vertices(&self, world: &World) -> Vec<f32> {
-        let mut vec: Vec<f32> = Vec::new();
+    fn build_vertices(&self, world: &World) -> (Vec<f32>, Vec<f32>, Vec<u16>) {
+        let mut vertices: Vec<f32> = Vec::new();
+        let mut colors: Vec<f32> = Vec::new();
+        let mut indices: Vec<u16> = Vec::new();
 
         let _mesh_storage = world.read_storage::<components::StaticMesh>();
 
         for mesh in (&_mesh_storage).join() {
             for vertex in &mesh.vertices {
-                vec.push(*vertex);
+                vertices.push(*vertex);
+            }
+            for vertex in &mesh.colors {
+                colors.push(*vertex);
+            }
+            for vertex in &mesh.indices {
+                indices.push(*vertex);
             }
             // we actually only need one mesh for now (until we add more variety)
             // TODO: actually manage a vertex memory space !!
             break;
         }
 
-        vec
+        (vertices, colors, indices)
     }
 
-    fn build_colors(&self, world: &World) -> Vec<f32> {
-        let mut vec: Vec<f32> = Vec::new();
-
-        let _mesh_storage = world.read_storage::<components::StaticColorMesh>();
-
-        for mesh in (&_mesh_storage).join() {
-            for vertex in &mesh.vertices {
-                vec.push(*vertex);
-            }
-            // we actually only need one mesh for now (until we add more variety)
-            // TODO: actually manage a vertex memory space !!
-            break;
-        }
-
-        vec
-    }
-
-    fn draw_arrays(&self, world: &World, size: i32){
+    fn draw_elements(&self, world: &World, size: i32){
         let mut matrices = self.build_matrices(world);
 
         for mut matrix in matrices {
@@ -298,11 +306,12 @@ impl Renderer {
             // u_matrix
             self.context.uniform_matrix4fv_with_f32_array(Some(&self.uniform[1]), false, &mut _matrix_ptr);
 
-            // Draw our shape (Triangles, offset, count) Our vertex shader will run <count> times.
-            self.context.draw_arrays(
+            // Draw our shape (Triangles, count, type, offset) Our vertex shader will run <count> times.
+            self.context.draw_elements_with_i32(
                 WebGlRenderingContext::TRIANGLES,
-                0,
                 size,
+                WebGlRenderingContext::UNSIGNED_SHORT,
+                0,
             );
         }
     }
