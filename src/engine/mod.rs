@@ -66,7 +66,6 @@ impl Engine {
         world.register::<Transform>();
         world.register::<Velocity>();
         world.register::<StaticMesh>();
-        world.register::<StaticColorMesh>();
 
         world.add_resource(DeltaTime(0.0));
 
