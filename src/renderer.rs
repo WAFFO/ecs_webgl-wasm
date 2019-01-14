@@ -13,7 +13,7 @@ pub struct Renderer {
     buffer: (web_sys::WebGlBuffer, web_sys::WebGlBuffer, web_sys::WebGlBuffer),
     context: web_sys::WebGlRenderingContext,
     canvas: web_sys::HtmlCanvasElement,
-    uniform: Vec<WebGlUniformLocation>,
+    uniform: (WebGlUniformLocation, WebGlUniformLocation),
 }
 
 impl Renderer {
@@ -63,15 +63,12 @@ impl Renderer {
         context.bind_buffer(WebGlRenderingContext::ELEMENT_ARRAY_BUFFER, Some(&index_buffer));
 
         // Get uniform variable locations from our shaders
-        let mut uniform : Vec<WebGlUniformLocation> = Vec::new();
-        uniform.push(
+        let u_camera =
             context.get_uniform_location(&program, "u_camera")
-            .expect("Could not find u_camera.")
-        );
-        uniform.push(
+            .expect("Could not find u_camera.");
+        let u_matrix =
             context.get_uniform_location(&program, "u_matrix")
-                .expect("Could not find u_matrix.")
-        );
+            .expect("Could not find u_matrix.");
 
         // Cull triangles (counter-clockwise = front facing)
         context.enable(WebGlRenderingContext::CULL_FACE);
@@ -86,7 +83,7 @@ impl Renderer {
             buffer: (buffer, color_buffer, index_buffer),
             context,
             canvas,
-            uniform,
+            uniform: (u_camera, u_matrix),
         })
     }
 
@@ -162,7 +159,7 @@ impl Renderer {
         let mut camera = glm::value_ptr_mut(&mut camera);
 
         // u_camera
-        self.context.uniform_matrix4fv_with_f32_array(Some(&self.uniform[0]), false, &mut camera);
+        self.context.uniform_matrix4fv_with_f32_array(Some(&self.uniform.0), false, &mut camera);
 
         self.draw_elements(world, indices.len() as i32);
 
@@ -305,7 +302,7 @@ impl Renderer {
             let mut _matrix_ptr = glm::value_ptr_mut(&mut matrix);
 
             // u_matrix
-            self.context.uniform_matrix4fv_with_f32_array(Some(&self.uniform[1]), false, &mut _matrix_ptr);
+            self.context.uniform_matrix4fv_with_f32_array(Some(&self.uniform.1), false, &mut _matrix_ptr);
 
             // Draw our shape (Triangles, count, type, offset) Our vertex shader will run <count> times.
             self.context.draw_elements_with_i32(
