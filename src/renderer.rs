@@ -78,6 +78,7 @@ impl Renderer {
 
         // Test Depth
         context.enable(WebGlRenderingContext::DEPTH_TEST);
+        context.depth_func(WebGlRenderingContext::LEQUAL);
 
         // Return our WebGL object
         Ok(Renderer {
@@ -115,7 +116,7 @@ impl Renderer {
         let colors_location = colors.as_ptr() as u32 / 4;
         let color_array = js_sys::Float32Array::new(&memory_buffer)
             .subarray(colors_location, colors_location + colors.len() as u32);
-        let indices_location = indices.as_ptr() as u32 / 4;
+        let indices_location = indices.as_ptr() as u32 / 2;
         let index_array = js_sys::Uint16Array::new(&memory_buffer)
             .subarray(indices_location, indices_location + indices.len() as u32);
 
@@ -136,7 +137,7 @@ impl Renderer {
         // start of color binding
         self.context.bind_buffer(WebGlRenderingContext::ARRAY_BUFFER, Some(&self.buffer.1));
         // Bind buffer to generic vertex attribute of the current vertex buffer object
-        self.context.vertex_attrib_pointer_with_i32(self.attribute.1, 3, WebGlRenderingContext::FLOAT, false, 0, 0);
+        self.context.vertex_attrib_pointer_with_i32(self.attribute.1, 4, WebGlRenderingContext::FLOAT, false, 0, 0);
         // Buffer_data will copy the data to the GPU memory
         self.context.buffer_data_with_array_buffer_view(
             WebGlRenderingContext::ARRAY_BUFFER,
@@ -163,7 +164,7 @@ impl Renderer {
         // u_camera
         self.context.uniform_matrix4fv_with_f32_array(Some(&self.uniform[0]), false, &mut camera);
 
-        self.draw_elements(world, 36);//(vertices.len() / 3) as i32);
+        self.draw_elements(world, indices.len() as i32);
 
         Ok(())
     }
