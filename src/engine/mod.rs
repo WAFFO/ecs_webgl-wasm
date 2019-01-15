@@ -1,6 +1,6 @@
 use wasm_bindgen::prelude::*;
 use specs::{World, Entity};
-use glm::{Vec3, vec3};
+use glm::vec3;
 
 pub mod components;
 pub mod entities;
@@ -32,7 +32,7 @@ impl Engine {
 
         let world = Engine::build_world();
 
-        let mut entities : Vec<Entity> = Vec::new();
+        let entities : Vec<Entity> = Vec::new();
 
         let renderer = Renderer::new()?;
 

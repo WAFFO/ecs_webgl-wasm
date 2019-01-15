@@ -1,13 +1,12 @@
 use js_sys::WebAssembly;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
-use web_sys::{WebGlProgram, WebGlRenderingContext, WebGlShader, WebGlUniformLocation, WebGlBuffer};
+use web_sys::{WebGlProgram, WebGlRenderingContext, WebGlShader, WebGlUniformLocation};
 use specs::{World, Join};
 use glm;
-use glm::{Vec3, vec3};
+use glm::vec3;
 
 use engine::components;
-use engine::components::StaticMesh;
 use engine::mesh_manager::{MeshManager, mesh::MeshIndex};
 
 pub struct Renderer {

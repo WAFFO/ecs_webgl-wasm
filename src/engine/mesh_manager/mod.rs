@@ -8,7 +8,7 @@ mod mesh_loader;
 pub mod mesh;
 
 use self::mesh_storage::MeshStorage;
-use self::mesh::{Mesh, MeshIndex};
+use self::mesh::MeshIndex;
 
 // type must impl Clone
 pub type UUID = String;

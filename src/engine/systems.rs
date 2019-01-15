@@ -22,20 +22,3 @@ impl<'a> System<'a> for UpdatePosition {
         }
     }
 }
-
-
-// !! probably a cancelled idea !! //
-
-pub struct RenderSystem;
-
-impl<'a> System<'a> for RenderSystem {
-    type SystemData = (ReadStorage<'a, Transform>, WriteStorage<'a, Render>);
-
-    fn run(&mut self, (pos, mut ren): Self::SystemData) {
-        use specs::Join;
-
-        for (pos, ren) in (&pos, &mut ren).join() {
-            // TODO fill this out
-        }
-    }
-}
