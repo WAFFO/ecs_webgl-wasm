@@ -20,7 +20,7 @@ impl MeshStorage {
             indices: Vec::new(),
         }
     }
-    pub fn get(&self, id: UUID) -> Option<&MeshIndex> {
+    pub fn get(&self, id: &UUID) -> Option<&MeshIndex> {
         self.registry.get(&id)
     }
     pub fn store(&mut self, id: UUID, mesh: Mesh) {
@@ -28,6 +28,21 @@ impl MeshStorage {
             offset: self.vertices.len() as u32,
             size: mesh.indices.len() as u32,
         };
-        // TODO: finish storage
+        // vertices
+        self.vertices.extend(&mesh.vertices);
+        // colors
+        if let Some(vec) = mesh.colors {
+            self.colors.extend(&vec);
+        }
+        else {
+            for i in 0..mesh.indices.len() {
+                self.colors.push(0.0);
+            }
+        }
+        // indices
+        self.indices.extend(&mesh.indices);
+
+        // register on the hashmap
+        self.registry.insert(id, index);
     }
 }

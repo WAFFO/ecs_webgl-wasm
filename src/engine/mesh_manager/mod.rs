@@ -7,15 +7,15 @@ mod mesh_storage;
 mod mesh_loader;
 pub mod mesh;
 
-use mesh_storage;
-use mesh_loader;
-use mesh::{Mesh, MeshIndex};
+use self::mesh_storage::MeshStorage;
+use self::mesh_loader;
+use self::mesh::{Mesh, MeshIndex};
 
 type UUID = String;
 
 pub struct MeshManager {
     updated: bool,
-    storage: mesh_storage,
+    storage: MeshStorage,
 }
 
 impl MeshManager {
@@ -26,13 +26,15 @@ impl MeshManager {
         }
     }
 
-    pub fn load(&self, id: UUID) -> bool {
-        if let Some(index) = self.storage.get(id) {
+    pub fn load(&mut self, id: UUID) -> bool {
+        if let Some(index) = self.storage.get(&id) {
             true
         }
         else {
             if id == "debug_box" {
-                mesh_loader::load_debug_cube();
+                self.storage.store(id,mesh_loader::load_debug_cube());
+                self.updated = true;
+                true
             }
             false
         }
