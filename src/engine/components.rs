@@ -2,6 +2,8 @@
 use specs::{Component, VecStorage};
 use glm::{Vec3, vec3};
 
+use engine::mesh_manager::UUID;
+
 
 // components
 pub struct Transform {
@@ -46,9 +48,7 @@ impl Default for Velocity {
 
 #[derive(Default)]
 pub struct StaticMesh {
-    pub vertices: Vec<f32>,
-    pub colors: Vec<f32>,
-    pub indices: Vec<u16>,
+    pub mesh_id: UUID,
 }
 
 impl Component for StaticMesh {

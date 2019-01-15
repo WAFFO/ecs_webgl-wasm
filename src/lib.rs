@@ -42,6 +42,8 @@ pub fn run() -> Result<(), JsValue> {
 
     let mut engine = Engine::new()?;
 
+    engine.init();
+
     let f = Rc::new(RefCell::new(None));
     let g = f.clone();
 

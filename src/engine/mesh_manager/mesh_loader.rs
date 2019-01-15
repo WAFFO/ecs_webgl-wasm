@@ -1,3 +1,4 @@
+
 use super::mesh::Mesh;
 
 pub fn load_debug_cube() -> Mesh {

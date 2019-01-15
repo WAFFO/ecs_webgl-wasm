@@ -7,6 +7,8 @@ use glm;
 use glm::{Vec3, vec3};
 
 use engine::components;
+use engine::components::StaticMesh;
+use engine::mesh_manager::{MeshManager, mesh::MeshIndex};
 
 pub struct Renderer {
     attribute: (u32, u32),
@@ -87,81 +89,28 @@ impl Renderer {
         })
     }
 
-    pub fn draw(&mut self, world: &World) -> Result<(), JsValue> {
+    pub fn draw(&mut self, world: &World, mesh_manager: &mut MeshManager) -> Result<(), JsValue> {
 
         // Draw over the entire canvas and clear buffer to ur present one
         self.context.clear_color(0.9, 0.9, 0.9, 1.0);
         self.context.clear(WebGlRenderingContext::COLOR_BUFFER_BIT | WebGlRenderingContext::DEPTH_BUFFER_BIT);
 
-        let (vertices, colors, indices) = self.build_vertices(world);
-        let vertices = vertices.as_slice();
-        let colors = colors.as_slice();
-        let indices = indices.as_slice();
-
         // set resolution to the canvas
         Renderer::resize_canvas_to_display_size(&mut self.canvas);
         self.context.viewport(0, 0, self.canvas.width() as i32, self.canvas.width() as i32);
 
-        // Get the buffer out of WebAssembly memory
-        let memory_buffer = wasm_bindgen::memory()
-            .dyn_into::<WebAssembly::Memory>()?
-            .buffer();
-        // Figure out where the vertices are in the memory_buffer (convert pointer to index)
-        let vertices_location = vertices.as_ptr() as u32 / 4;
-        let vert_array = js_sys::Float32Array::new(&memory_buffer)
-            .subarray(vertices_location, vertices_location + vertices.len() as u32);
-        let colors_location = colors.as_ptr() as u32 / 4;
-        let color_array = js_sys::Float32Array::new(&memory_buffer)
-            .subarray(colors_location, colors_location + colors.len() as u32);
-        let indices_location = indices.as_ptr() as u32 / 2;
-        let index_array = js_sys::Uint16Array::new(&memory_buffer)
-            .subarray(indices_location, indices_location + indices.len() as u32);
-
-        // start of vertex binding
-        self.context.bind_buffer(WebGlRenderingContext::ARRAY_BUFFER, Some(&self.buffer.0));
-        // Bind buffer to generic vertex attribute of the current vertex buffer object
-        self.context.vertex_attrib_pointer_with_i32(self.attribute.0, 3, WebGlRenderingContext::FLOAT, false, 0, 0);
-        // Buffer_data will copy the data to the GPU memory
-        self.context.buffer_data_with_array_buffer_view(
-            WebGlRenderingContext::ARRAY_BUFFER,
-            &vert_array,
-            WebGlRenderingContext::STATIC_DRAW,
-        );
-        // Attributes need to be enabled before use
-        self.context.enable_vertex_attrib_array(self.attribute.0);
-
-
-        // start of color binding
-        self.context.bind_buffer(WebGlRenderingContext::ARRAY_BUFFER, Some(&self.buffer.1));
-        // Bind buffer to generic vertex attribute of the current vertex buffer object
-        self.context.vertex_attrib_pointer_with_i32(self.attribute.1, 4, WebGlRenderingContext::FLOAT, false, 0, 0);
-        // Buffer_data will copy the data to the GPU memory
-        self.context.buffer_data_with_array_buffer_view(
-            WebGlRenderingContext::ARRAY_BUFFER,
-            &color_array,
-            WebGlRenderingContext::STATIC_DRAW,
-        );
-        // Attributes need to be enabled before use
-        self.context.enable_vertex_attrib_array(self.attribute.1);
-
-
-        // start of index binding
-        self.context.bind_buffer(WebGlRenderingContext::ELEMENT_ARRAY_BUFFER, Some(&self.buffer.2));
-        // Buffer_data will copy the data to the GPU memory
-        self.context.buffer_data_with_array_buffer_view(
-            WebGlRenderingContext::ELEMENT_ARRAY_BUFFER,
-            &index_array,
-            WebGlRenderingContext::STATIC_DRAW,
-        );
+        if mesh_manager.updated() {
+            self.buffer_data(mesh_manager)?;
+        }
 
         // camera
-        let mut camera = self.build_camera();
+        let mut camera = Renderer::build_camera();
         let mut camera = glm::value_ptr_mut(&mut camera);
 
         // u_camera
         self.context.uniform_matrix4fv_with_f32_array(Some(&self.uniform.0), false, &mut camera);
 
-        self.draw_elements(world, indices.len() as i32);
+        self.draw_elements(world, mesh_manager);
 
         Ok(())
     }
@@ -222,7 +171,69 @@ impl Renderer {
         }
     }
 
-    fn build_camera(&self) -> glm::Mat4 {
+    fn buffer_data(&self, mesh_manager: &mut MeshManager) -> Result<(), JsValue> {
+
+        let (vertices, colors, indices) = mesh_manager.get_storage();
+        let vertices = vertices.as_slice();
+        let colors = colors.as_slice();
+        let indices = indices.as_slice();
+
+        // Get the buffer out of WebAssembly memory
+        let memory_buffer = wasm_bindgen::memory()
+            .dyn_into::<WebAssembly::Memory>()?
+            .buffer();
+        // Figure out where the vertices are in the memory_buffer (convert pointer to index)
+        let vertices_location = vertices.as_ptr() as u32 / 4;
+        let vert_array = js_sys::Float32Array::new(&memory_buffer)
+            .subarray(vertices_location, vertices_location + vertices.len() as u32);
+        let colors_location = colors.as_ptr() as u32 / 4;
+        let color_array = js_sys::Float32Array::new(&memory_buffer)
+            .subarray(colors_location, colors_location + colors.len() as u32);
+        let indices_location = indices.as_ptr() as u32 / 2;
+        let index_array = js_sys::Uint16Array::new(&memory_buffer)
+            .subarray(indices_location, indices_location + indices.len() as u32);
+
+        // start of vertex binding
+        self.context.bind_buffer(WebGlRenderingContext::ARRAY_BUFFER, Some(&self.buffer.0));
+        // Bind buffer to generic vertex attribute of the current vertex buffer object
+        self.context.vertex_attrib_pointer_with_i32(self.attribute.0, 3, WebGlRenderingContext::FLOAT, false, 0, 0);
+        // Buffer_data will copy the data to the GPU memory
+        self.context.buffer_data_with_array_buffer_view(
+            WebGlRenderingContext::ARRAY_BUFFER,
+            &vert_array,
+            WebGlRenderingContext::STATIC_DRAW,
+        );
+        // Attributes need to be enabled before use
+        self.context.enable_vertex_attrib_array(self.attribute.0);
+
+
+        // start of color binding
+        self.context.bind_buffer(WebGlRenderingContext::ARRAY_BUFFER, Some(&self.buffer.1));
+        // Bind buffer to generic vertex attribute of the current vertex buffer object
+        self.context.vertex_attrib_pointer_with_i32(self.attribute.1, 4, WebGlRenderingContext::FLOAT, false, 0, 0);
+        // Buffer_data will copy the data to the GPU memory
+        self.context.buffer_data_with_array_buffer_view(
+            WebGlRenderingContext::ARRAY_BUFFER,
+            &color_array,
+            WebGlRenderingContext::STATIC_DRAW,
+        );
+        // Attributes need to be enabled before use
+        self.context.enable_vertex_attrib_array(self.attribute.1);
+
+
+        // start of index binding
+        self.context.bind_buffer(WebGlRenderingContext::ELEMENT_ARRAY_BUFFER, Some(&self.buffer.2));
+        // Buffer_data will copy the data to the GPU memory
+        self.context.buffer_data_with_array_buffer_view(
+            WebGlRenderingContext::ELEMENT_ARRAY_BUFFER,
+            &index_array,
+            WebGlRenderingContext::STATIC_DRAW,
+        );
+
+        Ok(())
+    }
+
+    fn build_camera() -> glm::Mat4 {
 
         let perspective =
             glm::perspective(1.0, 45.0, 0.1, 100.0);
@@ -238,67 +249,45 @@ impl Renderer {
         matrix
     }
 
-    fn build_matrices(&self, world: &World) -> Vec<glm::Mat4> {
-        let mut matrices: Vec<glm::Mat4> = Vec::new();
+    fn build_matrices(world: &World, mesh_manager: &MeshManager) -> Vec<(glm::Mat4, MeshIndex)> {
+        let mut matrices: Vec<(glm::Mat4, MeshIndex)> = Vec::new();
 
         let _transform_storage = world.read_storage::<components::Transform>();
+        let _mesh_storage = world.read_storage::<components::StaticMesh>();
 
-        for transform in (&_transform_storage).join() {
-            let matrix = glm::translate(
-                &glm::Mat4::identity(),
-                &transform.translation,
-            );
-            let matrix = glm::rotate_x(
-                &matrix,
-                transform.rotation[0],
-            );
-            let matrix = glm::rotate_y(
-                &matrix,
-                transform.rotation[1],
-            );
-            let matrix = glm::rotate_z(
-                &matrix,
-                transform.rotation[2],
-            );
-            let matrix = glm::scale(
-                &matrix,
-                &transform.scale,
-            );
-            matrices.push(matrix);
+        for (transform, mesh) in (&_transform_storage, &_mesh_storage).join() {
+            if let Some(mesh_index) = mesh_manager.get(mesh.mesh_id.clone()) {
+                let matrix = glm::translate(
+                    &glm::Mat4::identity(),
+                    &transform.translation,
+                );
+                let matrix = glm::rotate_x(
+                    &matrix,
+                    transform.rotation[0],
+                );
+                let matrix = glm::rotate_y(
+                    &matrix,
+                    transform.rotation[1],
+                );
+                let matrix = glm::rotate_z(
+                    &matrix,
+                    transform.rotation[2],
+                );
+                let matrix = glm::scale(
+                    &matrix,
+                    &transform.scale,
+                );
+                matrices.push((matrix, mesh_index));
+            }
         }
 
         matrices
     }
 
-    fn build_vertices(&self, world: &World) -> (Vec<f32>, Vec<f32>, Vec<u16>) {
-        let mut vertices: Vec<f32> = Vec::new();
-        let mut colors: Vec<f32> = Vec::new();
-        let mut indices: Vec<u16> = Vec::new();
+    fn draw_elements(&self, world: &World, mesh_manager: &MeshManager){
+        let matrices = Renderer::build_matrices(world, mesh_manager);
 
-        let _mesh_storage = world.read_storage::<components::StaticMesh>();
-
-        for mesh in (&_mesh_storage).join() {
-            for vertex in &mesh.vertices {
-                vertices.push(*vertex);
-            }
-            for vertex in &mesh.colors {
-                colors.push(*vertex);
-            }
-            for vertex in &mesh.indices {
-                indices.push(*vertex);
-            }
-            // we actually only need one mesh for now (until we add more variety)
-            // TODO: actually manage a vertex memory space !!
-            break;
-        }
-
-        (vertices, colors, indices)
-    }
-
-    fn draw_elements(&self, world: &World, size: i32){
-        let mut matrices = self.build_matrices(world);
-
-        for mut matrix in matrices {
+        for (mut matrix, mesh_index) in matrices {
             let mut _matrix_ptr = glm::value_ptr_mut(&mut matrix);
 
             // u_matrix
@@ -307,9 +296,9 @@ impl Renderer {
             // Draw our shape (Triangles, count, type, offset) Our vertex shader will run <count> times.
             self.context.draw_elements_with_i32(
                 WebGlRenderingContext::TRIANGLES,
-                size,
+                mesh_index.size,
                 WebGlRenderingContext::UNSIGNED_SHORT,
-                0,
+                mesh_index.offset,
             );
         }
     }
