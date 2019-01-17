@@ -72,7 +72,7 @@ impl Renderer {
             .expect("Could not find u_matrix.");
 
         // Cull triangles (counter-clockwise = front facing)
-        //context.enable(WebGlRenderingContext::CULL_FACE);
+        context.enable(WebGlRenderingContext::CULL_FACE);
 
         // Test Depth
         context.enable(WebGlRenderingContext::DEPTH_TEST);
