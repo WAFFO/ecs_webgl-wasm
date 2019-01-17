@@ -31,7 +31,12 @@ impl MeshStorage {
             offset: self.indices.len() as i32,
             size: mesh.indices.len() as i32,
         };
-        let vertex_offset = self.vertices.len() as u16;
+        let vertex_offset =
+            if self.vertices.len() > 0 {
+                (self.vertices.len() / 3) as u16
+            } else {
+                0
+            };
 
         // vertices
         self.vertices.extend(&mesh.vertices);
@@ -56,5 +61,7 @@ impl MeshStorage {
     pub fn get_storage(&self) -> (&Vec<f32>, &Vec<f32>, &Vec<u16>) {
         (&self.vertices, &self.colors, &self.indices)
     }
+
+    // TODO write a way to remove storage
 
 }

@@ -5,7 +5,7 @@ pub struct Mesh {
     pub indices: Vec<u16>,
 }
 
-#[derive(Default, Copy, Clone)]
+#[derive(Debug, Default, Copy, Clone)]
 pub struct MeshIndex {
     pub offset: i32,
     pub size: i32,

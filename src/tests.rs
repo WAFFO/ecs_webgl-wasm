@@ -1,19 +1,22 @@
-use renderer::Renderer;
-
-use glm;
-use glm::Vec3;
-
+use engine::mesh_manager::MeshManager;
 
 
 #[test]
-fn test_matrix() {
-    let mut vec: Vec<f32> = Vec::new();
+fn test_storage() {
+    let mut manager = MeshManager::new();
 
-    let mat = glm::Mat4::identity();
-    println!("Mat: {:?}", mat);
+    manager.load(String::from("debug_box"));
 
-    let projection =
-        glm::proj(&mat,&Vec3::new(0.5,0.5,0.5));
-    println!("Projection: {:?}", projection);
+    println!("{:?}", manager.get_storage());
+
+    manager.load(String::from("debug_box"));
+
+    println!("{:?}", manager.get_storage());
+
+    manager.load(String::from("debug_d20"));
+
+    println!("{:?}", manager.get_storage());
+    println!("{:?}", manager.get(String::from("debug_box")));
+    println!("{:?}", manager.get(String::from("debug_d20")));
 
 }

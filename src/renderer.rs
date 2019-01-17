@@ -72,7 +72,7 @@ impl Renderer {
             .expect("Could not find u_matrix.");
 
         // Cull triangles (counter-clockwise = front facing)
-        context.enable(WebGlRenderingContext::CULL_FACE);
+        //context.enable(WebGlRenderingContext::CULL_FACE);
 
         // Test Depth
         context.enable(WebGlRenderingContext::DEPTH_TEST);
@@ -292,12 +292,12 @@ impl Renderer {
             // u_matrix
             self.context.uniform_matrix4fv_with_f32_array(Some(&self.uniform.1), false, &mut _matrix_ptr);
 
-            // Draw our shape (Triangles, count, type, offset) Our vertex shader will run <count> times.
+            // Draw our shape (Triangles, count, type, offset : bytes) Our vertex shader will run $count times.
             self.context.draw_elements_with_i32(
                 WebGlRenderingContext::TRIANGLES,
                 mesh_index.size,
                 WebGlRenderingContext::UNSIGNED_SHORT,
-                mesh_index.offset,
+                mesh_index.offset * 2,
             );
         }
     }

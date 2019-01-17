@@ -33,6 +33,10 @@ impl MeshManager {
                 self.storage.store(id.clone(),mesh_loader::load_debug_cube());
                 self.updated = true;
             }
+            else if id == "debug_d20" {
+                self.storage.store(id.clone(),mesh_loader::load_debug_d20());
+                self.updated = true;
+            }
         }
         id
     }
