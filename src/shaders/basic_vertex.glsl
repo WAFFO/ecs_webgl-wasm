@@ -1,10 +1,11 @@
-attribute vec4 a_position;
-attribute vec4 a_color;
+#version 300 es
+in vec4 a_position;
+in vec4 a_color;
 
 uniform mat4 u_camera;
 uniform mat4 u_matrix;
 
-varying vec4 v_color;
+out vec4 v_color;
 
 void main() {
   // Multiply the position by the matrix.

@@ -1,7 +1,7 @@
 use js_sys::WebAssembly;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
-use web_sys::{WebGlProgram, WebGlRenderingContext, WebGlShader, WebGlUniformLocation};
+use web_sys::{WebGlProgram, WebGl2RenderingContext, WebGlShader, WebGlUniformLocation};
 use specs::{World, Join};
 use glm;
 use glm::vec3;
@@ -12,9 +12,10 @@ use engine::mesh_manager::{MeshManager, mesh::MeshIndex};
 pub struct Renderer {
     attribute: (u32, u32),
     buffer: (web_sys::WebGlBuffer, web_sys::WebGlBuffer, web_sys::WebGlBuffer),
-    context: web_sys::WebGlRenderingContext,
+    context: web_sys::WebGl2RenderingContext,
     canvas: web_sys::HtmlCanvasElement,
     uniform: (WebGlUniformLocation, WebGlUniformLocation),
+    vao: web_sys::WebGlVertexArrayObject,
 }
 
 impl Renderer {
@@ -26,25 +27,30 @@ impl Renderer {
 
         // Cast our canvas into a WebGl context
         let context = canvas
-            .get_context("webgl")?
+            .get_context("webgl2")?
             .unwrap()
-            .dyn_into::<WebGlRenderingContext>()?;
+            .dyn_into::<WebGl2RenderingContext>()?;
 
         // Compile our shaders
         let vert_shader = Renderer::compile_shader(
             &context,
-            WebGlRenderingContext::VERTEX_SHADER,
+            WebGl2RenderingContext::VERTEX_SHADER,
             include_str!("shaders/basic_vertex.glsl"),
         )?;
         let frag_shader = Renderer::compile_shader(
             &context,
-            WebGlRenderingContext::FRAGMENT_SHADER,
+            WebGl2RenderingContext::FRAGMENT_SHADER,
             include_str!("shaders/basic_fragment.glsl"),
         )?;
 
         // A WebGLProgram is the object that holds the two compiled shaders
         let program = Renderer::link_program(&context, [vert_shader, frag_shader].iter())?;
         context.use_program(Some(&program));
+
+        // create a vertex array object (stores attribute state)
+        let vao = context.create_vertex_array()
+            .expect("Could not create a Vertex Array Object.");
+        context.bind_vertex_array(Some(&vao));
 
         // positions in the shader
         let mut attribute: (u32, u32) = (0, 0);
@@ -53,15 +59,15 @@ impl Renderer {
 
         // Attributes in shaders come from buffers, first get the buffer
         let buffer = context.create_buffer().ok_or("failed to create a vertex buffer")?;
-        context.bind_buffer(WebGlRenderingContext::ARRAY_BUFFER, Some(&buffer));
+        context.bind_buffer(WebGl2RenderingContext::ARRAY_BUFFER, Some(&buffer));
 
         // color buffer
         let color_buffer = context.create_buffer().ok_or("failed to create a color buffer")?;
-        context.bind_buffer(WebGlRenderingContext::ARRAY_BUFFER, Some(&color_buffer));
+        context.bind_buffer(WebGl2RenderingContext::ARRAY_BUFFER, Some(&color_buffer));
 
         // index buffer
         let index_buffer = context.create_buffer().ok_or("failed to create an index buffer")?;
-        context.bind_buffer(WebGlRenderingContext::ELEMENT_ARRAY_BUFFER, Some(&index_buffer));
+        context.bind_buffer(WebGl2RenderingContext::ELEMENT_ARRAY_BUFFER, Some(&index_buffer));
 
         // Get uniform variable locations from our shaders
         let u_camera =
@@ -72,11 +78,11 @@ impl Renderer {
             .expect("Could not find u_matrix.");
 
         // Cull triangles (counter-clockwise = front facing)
-        context.enable(WebGlRenderingContext::CULL_FACE);
+        context.enable(WebGl2RenderingContext::CULL_FACE);
 
         // Test Depth
-        context.enable(WebGlRenderingContext::DEPTH_TEST);
-        context.depth_func(WebGlRenderingContext::LEQUAL);
+        context.enable(WebGl2RenderingContext::DEPTH_TEST);
+        context.depth_func(WebGl2RenderingContext::LEQUAL);
 
         // Return our WebGL object
         Ok(Renderer {
@@ -85,6 +91,7 @@ impl Renderer {
             context,
             canvas,
             uniform: (u_camera, u_matrix),
+            vao,
         })
     }
 
@@ -92,7 +99,7 @@ impl Renderer {
 
         // Draw over the entire canvas and clear buffer to ur present one
         self.context.clear_color(0.9, 0.9, 0.9, 1.0);
-        self.context.clear(WebGlRenderingContext::COLOR_BUFFER_BIT | WebGlRenderingContext::DEPTH_BUFFER_BIT);
+        self.context.clear(WebGl2RenderingContext::COLOR_BUFFER_BIT | WebGl2RenderingContext::DEPTH_BUFFER_BIT);
 
         // set resolution to the canvas
         Renderer::resize_canvas_to_display_size(&mut self.canvas);
@@ -116,7 +123,7 @@ impl Renderer {
     
     // non pub //
     
-    fn compile_shader(context: &WebGlRenderingContext, shader_type: u32, source: &str
+    fn compile_shader(context: &WebGl2RenderingContext, shader_type: u32, source: &str
     ) -> Result<WebGlShader, String> {
         let shader = context
             .create_shader(shader_type)
@@ -125,7 +132,7 @@ impl Renderer {
         context.compile_shader(&shader);
 
         if context
-            .get_shader_parameter(&shader, WebGlRenderingContext::COMPILE_STATUS)
+            .get_shader_parameter(&shader, WebGl2RenderingContext::COMPILE_STATUS)
             .as_bool()
             .unwrap_or(false)
             {
@@ -137,7 +144,7 @@ impl Renderer {
         }
     }
 
-    fn link_program<'a, T>(context: &WebGlRenderingContext, shaders: T
+    fn link_program<'a, T>(context: &WebGl2RenderingContext, shaders: T
     ) -> Result<WebGlProgram, String>
         where T: IntoIterator<Item=&'a WebGlShader> {
         let program = context
@@ -149,7 +156,7 @@ impl Renderer {
         context.link_program(&program);
 
         if context
-            .get_program_parameter(&program, WebGlRenderingContext::LINK_STATUS)
+            .get_program_parameter(&program, WebGl2RenderingContext::LINK_STATUS)
             .as_bool()
             .unwrap_or(false)
             {
@@ -193,40 +200,40 @@ impl Renderer {
             .subarray(indices_location, indices_location + indices.len() as u32);
 
         // start of vertex binding
-        self.context.bind_buffer(WebGlRenderingContext::ARRAY_BUFFER, Some(&self.buffer.0));
+        self.context.bind_buffer(WebGl2RenderingContext::ARRAY_BUFFER, Some(&self.buffer.0));
         // Bind buffer to generic vertex attribute of the current vertex buffer object
-        self.context.vertex_attrib_pointer_with_i32(self.attribute.0, 3, WebGlRenderingContext::FLOAT, false, 0, 0);
+        self.context.vertex_attrib_pointer_with_i32(self.attribute.0, 3, WebGl2RenderingContext::FLOAT, false, 0, 0);
         // Buffer_data will copy the data to the GPU memory
         self.context.buffer_data_with_array_buffer_view(
-            WebGlRenderingContext::ARRAY_BUFFER,
+            WebGl2RenderingContext::ARRAY_BUFFER,
             &vert_array,
-            WebGlRenderingContext::STATIC_DRAW,
+            WebGl2RenderingContext::STATIC_DRAW,
         );
         // Attributes need to be enabled before use
         self.context.enable_vertex_attrib_array(self.attribute.0);
 
 
         // start of color binding
-        self.context.bind_buffer(WebGlRenderingContext::ARRAY_BUFFER, Some(&self.buffer.1));
+        self.context.bind_buffer(WebGl2RenderingContext::ARRAY_BUFFER, Some(&self.buffer.1));
         // Bind buffer to generic vertex attribute of the current vertex buffer object
-        self.context.vertex_attrib_pointer_with_i32(self.attribute.1, 4, WebGlRenderingContext::FLOAT, false, 0, 0);
+        self.context.vertex_attrib_pointer_with_i32(self.attribute.1, 4, WebGl2RenderingContext::FLOAT, false, 0, 0);
         // Buffer_data will copy the data to the GPU memory
         self.context.buffer_data_with_array_buffer_view(
-            WebGlRenderingContext::ARRAY_BUFFER,
+            WebGl2RenderingContext::ARRAY_BUFFER,
             &color_array,
-            WebGlRenderingContext::STATIC_DRAW,
+            WebGl2RenderingContext::STATIC_DRAW,
         );
         // Attributes need to be enabled before use
         self.context.enable_vertex_attrib_array(self.attribute.1);
 
 
         // start of index binding
-        self.context.bind_buffer(WebGlRenderingContext::ELEMENT_ARRAY_BUFFER, Some(&self.buffer.2));
+        self.context.bind_buffer(WebGl2RenderingContext::ELEMENT_ARRAY_BUFFER, Some(&self.buffer.2));
         // Buffer_data will copy the data to the GPU memory
         self.context.buffer_data_with_array_buffer_view(
-            WebGlRenderingContext::ELEMENT_ARRAY_BUFFER,
+            WebGl2RenderingContext::ELEMENT_ARRAY_BUFFER,
             &index_array,
-            WebGlRenderingContext::STATIC_DRAW,
+            WebGl2RenderingContext::STATIC_DRAW,
         );
 
         Ok(())
@@ -286,6 +293,8 @@ impl Renderer {
     fn draw_elements(&self, world: &World, mesh_manager: &MeshManager){
         let matrices = Renderer::build_matrices(world, mesh_manager);
 
+        self.context.bind_vertex_array(Some(&self.vao));
+
         for (mut matrix, mesh_index) in matrices {
             let mut _matrix_ptr = glm::value_ptr_mut(&mut matrix);
 
@@ -294,9 +303,9 @@ impl Renderer {
 
             // Draw our shape (Triangles, count, type, offset : bytes) Our vertex shader will run $count times.
             self.context.draw_elements_with_i32(
-                WebGlRenderingContext::TRIANGLES,
+                WebGl2RenderingContext::TRIANGLES,
                 mesh_index.size,
-                WebGlRenderingContext::UNSIGNED_SHORT,
+                WebGl2RenderingContext::UNSIGNED_SHORT,
                 mesh_index.offset * 2,
             );
         }
