@@ -11,7 +11,7 @@ use engine::mesh_manager::{MeshManager, mesh::MeshIndex};
 
 pub struct Renderer {
     attribute: (u32, u32),
-    buffer: (web_sys::WebGlBuffer, web_sys::WebGlBuffer, web_sys::WebGlBuffer),
+    buffer: (web_sys::WebGlBuffer, web_sys::WebGlBuffer),
     context: web_sys::WebGl2RenderingContext,
     canvas: web_sys::HtmlCanvasElement,
     uniform: (WebGlUniformLocation, WebGlUniformLocation),
@@ -66,8 +66,8 @@ impl Renderer {
         context.bind_buffer(WebGl2RenderingContext::ARRAY_BUFFER, Some(&color_buffer));
 
         // index buffer
-        let index_buffer = context.create_buffer().ok_or("failed to create an index buffer")?;
-        context.bind_buffer(WebGl2RenderingContext::ELEMENT_ARRAY_BUFFER, Some(&index_buffer));
+//        let index_buffer = context.create_buffer().ok_or("failed to create an index buffer")?;
+//        context.bind_buffer(WebGl2RenderingContext::ELEMENT_ARRAY_BUFFER, Some(&index_buffer));
 
         // Get uniform variable locations from our shaders
         let u_camera =
@@ -87,7 +87,7 @@ impl Renderer {
         // Return our WebGL object
         Ok(Renderer {
             attribute,
-            buffer: (buffer, color_buffer, index_buffer),
+            buffer: (buffer, color_buffer),
             context,
             canvas,
             uniform: (u_camera, u_matrix),
@@ -116,7 +116,7 @@ impl Renderer {
         // u_camera
         self.context.uniform_matrix4fv_with_f32_array(Some(&self.uniform.0), false, &mut camera);
 
-        self.draw_elements(world, mesh_manager);
+        self.draw_arrays(world, mesh_manager);
 
         Ok(())
     }
@@ -179,10 +179,10 @@ impl Renderer {
 
     fn buffer_data(&self, mesh_manager: &mut MeshManager) -> Result<(), JsValue> {
 
-        let (vertices, colors, indices) = mesh_manager.get_storage();
+        let (vertices, colors) = mesh_manager.get_storage();
         let vertices = vertices.as_slice();
         let colors = colors.as_slice();
-        let indices = indices.as_slice();
+//        let indices = indices.as_slice();
 
         // Get the buffer out of WebAssembly memory
         let memory_buffer = wasm_bindgen::memory()
@@ -195,9 +195,9 @@ impl Renderer {
         let colors_location = colors.as_ptr() as u32 / 4;
         let color_array = js_sys::Float32Array::new(&memory_buffer)
             .subarray(colors_location, colors_location + colors.len() as u32);
-        let indices_location = indices.as_ptr() as u32 / 2;
-        let index_array = js_sys::Uint16Array::new(&memory_buffer)
-            .subarray(indices_location, indices_location + indices.len() as u32);
+//        let indices_location = indices.as_ptr() as u32 / 2;
+//        let index_array = js_sys::Uint16Array::new(&memory_buffer)
+//            .subarray(indices_location, indices_location + indices.len() as u32);
 
         // start of vertex binding
         self.context.bind_buffer(WebGl2RenderingContext::ARRAY_BUFFER, Some(&self.buffer.0));
@@ -228,13 +228,13 @@ impl Renderer {
 
 
         // start of index binding
-        self.context.bind_buffer(WebGl2RenderingContext::ELEMENT_ARRAY_BUFFER, Some(&self.buffer.2));
-        // Buffer_data will copy the data to the GPU memory
-        self.context.buffer_data_with_array_buffer_view(
-            WebGl2RenderingContext::ELEMENT_ARRAY_BUFFER,
-            &index_array,
-            WebGl2RenderingContext::STATIC_DRAW,
-        );
+//        self.context.bind_buffer(WebGl2RenderingContext::ELEMENT_ARRAY_BUFFER, Some(&self.buffer.2));
+//        // Buffer_data will copy the data to the GPU memory
+//        self.context.buffer_data_with_array_buffer_view(
+//            WebGl2RenderingContext::ELEMENT_ARRAY_BUFFER,
+//            &index_array,
+//            WebGl2RenderingContext::STATIC_DRAW,
+//        );
 
         Ok(())
     }
@@ -290,7 +290,7 @@ impl Renderer {
         matrices
     }
 
-    fn draw_elements(&self, world: &World, mesh_manager: &MeshManager){
+    fn draw_arrays(&self, world: &World, mesh_manager: &MeshManager){
         let matrices = Renderer::build_matrices(world, mesh_manager);
 
         self.context.bind_vertex_array(Some(&self.vao));
@@ -301,12 +301,11 @@ impl Renderer {
             // u_matrix
             self.context.uniform_matrix4fv_with_f32_array(Some(&self.uniform.1), false, &mut _matrix_ptr);
 
-            // Draw our shape (Triangles, count, type, offset : bytes) Our vertex shader will run $count times.
-            self.context.draw_elements_with_i32(
+            // Draw our shape (Triangles, first_index, count) Our vertex shader will run $count times.
+            self.context.draw_arrays(
                 WebGl2RenderingContext::TRIANGLES,
-                mesh_index.size,
-                WebGl2RenderingContext::UNSIGNED_SHORT,
-                mesh_index.offset * 2,
+                mesh_index.index,
+                mesh_index.count,
             );
         }
     }

@@ -5,6 +5,7 @@
 
 mod mesh_storage;
 mod mesh_loader;
+pub mod mesh_exploder;
 pub mod mesh;
 
 use self::mesh_storage::MeshStorage;
@@ -30,18 +31,18 @@ impl MeshManager {
     pub fn load(&mut self, id: UUID) -> UUID {
         if let None = self.storage.get(&id) {
             if id == "debug_box" {
-                self.storage.store(id.clone(),mesh_loader::load_debug_cube());
+                self.storage.store(id.clone(),mesh_loader::load_debug_cube().explode());
                 self.updated = true;
             }
             else if id == "debug_d20" {
-                self.storage.store(id.clone(),mesh_loader::load_debug_d20());
+                self.storage.store(id.clone(),mesh_loader::load_debug_d20().explode());
                 self.updated = true;
             }
         }
         id
     }
 
-    pub fn get_storage(&mut self) -> (&Vec<f32>, &Vec<f32>, &Vec<u16>) {
+    pub fn get_storage(&mut self) -> (&Vec<f32>, &Vec<f32>) {
         self.updated = false;
         self.storage.get_storage()
     }
