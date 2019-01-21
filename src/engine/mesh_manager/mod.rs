@@ -34,6 +34,10 @@ impl MeshManager {
                 self.storage.store(id.clone(),mesh_loader::load_debug_cube().explode());
                 self.updated = true;
             }
+            else if id == "debug_color_box" {
+                self.storage.store(id.clone(),mesh_loader::load_debug_color_cube().explode());
+                self.updated = true;
+            }
             else if id == "debug_d20" {
                 self.storage.store(id.clone(),mesh_loader::load_debug_d20().explode());
                 self.updated = true;

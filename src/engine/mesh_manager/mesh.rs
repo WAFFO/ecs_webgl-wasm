@@ -11,6 +11,14 @@ pub struct MeshIndexed {
     pub indices: Vec<u16>,
 }
 
+#[derive(Debug)]
+pub struct MeshCompressed {
+    pub vertices: Vec<f32>,
+    pub colors: Vec<f32>,
+    pub v_indices: Vec<u16>,
+    pub c_indices: Vec<u16>,
+}
+
 #[derive(Debug, Default, Copy, Clone)]
 pub struct MeshIndex {
     pub index: i32,

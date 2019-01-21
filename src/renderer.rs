@@ -14,7 +14,7 @@ pub struct Renderer {
     buffer: (web_sys::WebGlBuffer, web_sys::WebGlBuffer),
     context: web_sys::WebGl2RenderingContext,
     canvas: web_sys::HtmlCanvasElement,
-    uniform: (WebGlUniformLocation, WebGlUniformLocation),
+    uniform: (WebGlUniformLocation, WebGlUniformLocation, WebGlUniformLocation),
     vao: web_sys::WebGlVertexArrayObject,
 }
 
@@ -70,8 +70,11 @@ impl Renderer {
 //        context.bind_buffer(WebGl2RenderingContext::ELEMENT_ARRAY_BUFFER, Some(&index_buffer));
 
         // Get uniform variable locations from our shaders
-        let u_camera =
-            context.get_uniform_location(&program, "u_camera")
+        let u_projection =
+            context.get_uniform_location(&program, "u_projection")
+                .expect("Could not find u_camera.");
+        let u_view =
+            context.get_uniform_location(&program, "u_view")
             .expect("Could not find u_camera.");
         let u_matrix =
             context.get_uniform_location(&program, "u_matrix")
@@ -90,7 +93,7 @@ impl Renderer {
             buffer: (buffer, color_buffer),
             context,
             canvas,
-            uniform: (u_camera, u_matrix),
+            uniform: (u_projection, u_view, u_matrix),
             vao,
         })
     }
@@ -99,6 +102,7 @@ impl Renderer {
 
         // Draw over the entire canvas and clear buffer to ur present one
         self.context.clear_color(0.9, 0.9, 0.9, 1.0);
+        self.context.clear_depth(1.0);
         self.context.clear(WebGl2RenderingContext::COLOR_BUFFER_BIT | WebGl2RenderingContext::DEPTH_BUFFER_BIT);
 
         // set resolution to the canvas
@@ -109,12 +113,17 @@ impl Renderer {
             self.buffer_data(mesh_manager)?;
         }
 
-        // camera
-        let mut camera = Renderer::build_camera();
-        let mut camera = glm::value_ptr_mut(&mut camera);
+        // camera stuff
+        let mut proj = Renderer::build_projection();
+        let mut proj = glm::value_ptr_mut(&mut proj);
+        let mut view = Renderer::build_view();
+        let mut view = glm::value_ptr_mut(&mut view);
 
-        // u_camera
-        self.context.uniform_matrix4fv_with_f32_array(Some(&self.uniform.0), false, &mut camera);
+        // u_projection
+        self.context.uniform_matrix4fv_with_f32_array(Some(&self.uniform.0), false, &mut proj);
+
+        // u_view
+        self.context.uniform_matrix4fv_with_f32_array(Some(&self.uniform.1), false, &mut view);
 
         self.draw_arrays(world, mesh_manager);
 
@@ -239,20 +248,16 @@ impl Renderer {
         Ok(())
     }
 
-    fn build_camera() -> glm::Mat4 {
+    fn build_projection() -> glm::Mat4 {
+        glm::perspective(1.0, 45.0, 0.1, 20.0)
+    }
 
-        let perspective =
-            glm::perspective(1.0, 45.0, 0.1, 100.0);
-        let view =
-            glm::look_at(
-                &vec3(4.0,3.0,3.0),
-                &vec3(0.0, 0.0, 0.0),
-                &vec3(0.0, 1.0, 0.0),
-            );
-
-        let matrix = perspective * view * glm::Mat4::identity();
-
-        matrix
+    fn build_view() -> glm::Mat4 {
+        glm::look_at(
+            &vec3(4.0,3.0,3.0),
+            &vec3(0.0, 0.0, 0.0),
+            &vec3(0.0, 1.0, 0.0),
+        )
     }
 
     fn build_matrices(world: &World, mesh_manager: &MeshManager) -> Vec<(glm::Mat4, MeshIndex)> {
@@ -299,7 +304,7 @@ impl Renderer {
             let mut _matrix_ptr = glm::value_ptr_mut(&mut matrix);
 
             // u_matrix
-            self.context.uniform_matrix4fv_with_f32_array(Some(&self.uniform.1), false, &mut _matrix_ptr);
+            self.context.uniform_matrix4fv_with_f32_array(Some(&self.uniform.2), false, &mut _matrix_ptr);
 
             // Draw our shape (Triangles, first_index, count) Our vertex shader will run $count times.
             self.context.draw_arrays(
