@@ -10,6 +10,7 @@ pub mod mesh;
 
 use self::mesh_storage::MeshStorage;
 use self::mesh::MeshIndex;
+use self::mesh_exploder::Explodable;
 
 // type must impl Clone
 pub type UUID = String;
