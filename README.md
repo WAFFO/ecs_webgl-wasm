@@ -15,3 +15,5 @@ $ ./start_server.sh
 ```
 
 and then visit http://localhost:8080 in your browser! Simple as that!
+
+(If your build asks to update wasm-bindgen-cli, run `update_build.sh` and then build again.)
