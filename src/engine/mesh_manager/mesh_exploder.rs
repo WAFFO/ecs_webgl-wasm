@@ -1,8 +1,12 @@
 
 use super::mesh::{Mesh, MeshIndexed, MeshCompressed};
 
-impl MeshIndexed {
-    pub fn explode(self) -> Mesh {
+pub trait Explodable {
+    fn explode(self) -> Mesh;
+}
+
+impl Explodable for MeshIndexed {
+    fn explode(self) -> Mesh {
         let mut mesh = Mesh {
             vertices: Vec::new(),
             colors: Vec::new(),
@@ -24,8 +28,8 @@ impl MeshIndexed {
     }
 }
 
-impl MeshCompressed {
-    pub fn explode(self) -> Mesh {
+impl Explodable for MeshCompressed {
+    fn explode(self) -> Mesh {
         let mut mesh = Mesh {
             vertices: Vec::new(),
             colors: Vec::new(),
