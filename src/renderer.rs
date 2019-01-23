@@ -8,22 +8,21 @@ use glm::vec3;
 
 use engine::components;
 use engine::mesh_manager::{MeshManager, mesh::MeshIndex};
+use javascript::get_canvas;
 
 pub struct Renderer {
     attribute: (u32, u32),
-    buffer: (web_sys::WebGlBuffer, web_sys::WebGlBuffer),
-    context: web_sys::WebGl2RenderingContext,
-    canvas: web_sys::HtmlCanvasElement,
-    uniform: (WebGlUniformLocation, WebGlUniformLocation, WebGlUniformLocation),
-    vao: web_sys::WebGlVertexArrayObject,
+    buffer:    (web_sys::WebGlBuffer, web_sys::WebGlBuffer),
+    context:    web_sys::WebGl2RenderingContext,
+    canvas:     web_sys::HtmlCanvasElement,
+    uniform:   (WebGlUniformLocation, WebGlUniformLocation, WebGlUniformLocation),
+    vao:        web_sys::WebGlVertexArrayObject,
 }
 
 impl Renderer {
     pub fn new() -> Result<(Renderer), JsValue> {
         // Gather our canvas from the DOM
-        let document = web_sys::window().unwrap().document().unwrap();
-        let element = document.get_element_by_id("canvas").unwrap();
-        let canvas: web_sys::HtmlCanvasElement = element.dyn_into::<web_sys::HtmlCanvasElement>()?;
+        let canvas: web_sys::HtmlCanvasElement = get_canvas()?;
 
         // Cast our canvas into a WebGl context
         let context = canvas
@@ -116,7 +115,7 @@ impl Renderer {
         // camera stuff
         let mut proj = Renderer::build_projection();
         let mut proj = glm::value_ptr_mut(&mut proj);
-        let mut view = Renderer::build_view();
+        let mut view = Renderer::build_view(&world);
         let mut view = glm::value_ptr_mut(&mut view);
 
         // u_projection
@@ -249,15 +248,25 @@ impl Renderer {
     }
 
     fn build_projection() -> glm::Mat4 {
-        glm::perspective(1.0, 45.0, 0.1, 20.0)
+        glm::perspective(1.0, 45.0, 0.1, 200.0)
     }
 
-    fn build_view() -> glm::Mat4 {
-        glm::look_at(
-            &vec3(4.0,3.0,3.0),
-            &vec3(0.0, 0.0, 0.0),
-            &vec3(0.0, 1.0, 0.0),
-        )
+    fn build_view(world: &World) -> glm::Mat4 {
+        let _camera_storage = world.read_storage::<components::Camera>();
+
+        let mut result = glm::Mat4::identity();
+
+        for camera in (&_camera_storage).join() {
+
+            result = glm::look_at(
+                &camera.position,
+                &camera.target,
+                &vec3(0.0, 1.0, 0.0),
+            );
+            break;
+        }
+
+        result
     }
 
     fn build_matrices(world: &World, mesh_manager: &MeshManager) -> Vec<(glm::Mat4, MeshIndex)> {

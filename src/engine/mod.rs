@@ -18,6 +18,7 @@ use timer::Timer;
 
 
 // Engine
+#[wasm_bindgen]
 pub struct Engine {
     world: World,
     entities: Vec<Entity>,
@@ -26,6 +27,7 @@ pub struct Engine {
     mesh_manager: MeshManager,
 }
 
+#[wasm_bindgen]
 impl Engine {
 
     pub fn new() -> Result<(Engine), JsValue> {
@@ -83,10 +85,17 @@ impl Engine {
             )
         );
 
+        self.entities.push(
+            camera(&mut self.world, vec3( 4.0,3.0,3.0 ),
+                    vec3( 0.0,0.0,0.0 ),
+            )
+        );
+
         self.world.maintain();
 
     }
 
+    #[wasm_bindgen]
     pub fn tick(&mut self) -> Result<(), JsValue> {
 
         {
@@ -103,18 +112,29 @@ impl Engine {
         // the last thing we do
         self.renderer.draw(&self.world, &mut self.mesh_manager)
     }
+}
 
+impl Engine {
     fn build_world() -> World {
         let mut world = World::new();
 
         world.register::<Transform>();
         world.register::<Velocity>();
         world.register::<StaticMesh>();
+        world.register::<Camera>();
 
         world.add_resource(DeltaTime(0.0));
 
         world.maintain();
 
         world
+    }
+
+    pub fn world(&self) -> &World {
+        &self.world
+    }
+
+    pub fn delta(&self) -> f32 {
+        self.timer.get_delta() as f32
     }
 }

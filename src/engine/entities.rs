@@ -12,3 +12,9 @@ pub fn test_3d(world: &mut World, mesh: UUID, translation: Vec3, scale: f32, rot
         .with(StaticMesh { mesh_id: mesh } )
         .build()
 }
+
+pub fn camera(world: &mut World, position: Vec3, target: Vec3) -> Entity {
+    world.create_entity()
+        .with(Camera  { position, target })
+        .build()
+}

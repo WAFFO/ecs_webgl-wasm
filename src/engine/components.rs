@@ -55,29 +55,21 @@ impl Component for StaticMesh {
     type Storage = VecStorage<Self>;
 }
 
-pub struct Render {
-    pub vertices: Vec<f32>,
-    visible: bool,
+
+pub struct Camera {
+    pub position: Vec3,
+    pub target: Vec3,
 }
 
-impl Component for Render {
+impl Component for Camera {
     type Storage = VecStorage<Self>;
 }
 
-impl Default for Render {
-    fn default() -> Render {
-        Render {
-            vertices: Vec::new(),
-            visible: false,
+impl Default for Camera {
+    fn default() -> Camera {
+        Camera {
+            position: vec3(0.0, 0.0, 0.0),
+            target: vec3(0.0, 0.0, 0.0),
         }
-    }
-}
-
-impl Render {
-    pub fn visible(&self) -> bool {
-        self.visible
-    }
-    pub fn set_visible(&mut self, v: bool) {
-        self.visible = v;
     }
 }
