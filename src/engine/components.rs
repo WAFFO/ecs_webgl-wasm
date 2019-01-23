@@ -57,7 +57,7 @@ impl Component for StaticMesh {
 
 
 pub struct Camera {
-    pub position: Vec3,
+    pub rotation: Vec3,
     pub target: Vec3,
 }
 
@@ -68,7 +68,7 @@ impl Component for Camera {
 impl Default for Camera {
     fn default() -> Camera {
         Camera {
-            position: vec3(0.0, 0.0, 0.0),
+            rotation: vec3(0.0, 0.0, 1.0),
             target: vec3(0.0, 0.0, 0.0),
         }
     }

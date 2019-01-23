@@ -13,8 +13,8 @@ pub fn test_3d(world: &mut World, mesh: UUID, translation: Vec3, scale: f32, rot
         .build()
 }
 
-pub fn camera(world: &mut World, position: Vec3, target: Vec3) -> Entity {
+pub fn camera(world: &mut World, rotation: Vec3, target: Vec3) -> Entity {
     world.create_entity()
-        .with(Camera  { position, target })
+        .with(Camera  { rotation, target })
         .build()
 }
