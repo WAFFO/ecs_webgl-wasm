@@ -23,13 +23,19 @@
 
     function lockChangeAlert() {
       if (document.pointerLockElement === canvas) {
-        document.addEventListener("mousemove", updatePosition, false);
+        document.addEventListener("mousemove", updateMouse, false);
+        document.addEventListener('keydown', keyDown, false);
+        document.addEventListener('keyup', keyUp, false);
       } else {
-        document.removeEventListener("mousemove", updatePosition, false);
+        document.removeEventListener("mousemove", updateMouse, false);
+        document.removeEventListener('keydown', keyDown, false);
+        document.removeEventListener('keyup', keyUp, false);
       }
     }
 
-    function updatePosition(e) { Engine.mouse_move(e.movementX, e.movementY); }
+    function updateMouse(e) { Engine.mouse_move(e.movementX, e.movementY); }
+    function keyDown(e) { Engine.key_down(e.keyCode); }
+    function keyUp(e) { Engine.key_up(e.keyCode); }
 
     requestAnimationFrame(renderLoop);
 })();
