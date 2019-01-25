@@ -1,20 +1,20 @@
 use wasm_bindgen::prelude::*;
-use specs::{World, Entity};
-use glm::vec3;
+use specs::{World, Entity, Join};
+use glm::{Vec3,vec3,normalize,cross,U1};
 
 pub mod components;
 pub mod entities;
 pub mod resources;
 pub mod systems;
 pub mod mesh_manager;
-pub mod key_mapper;
 
 use self::components::*;
 use self::entities::*;
 use self::resources::*;
 use self::systems::*;
 use self::mesh_manager::MeshManager;
-use self::key_mapper::KeyMap;
+use input::KeyMap;
+use input::Key::*;
 use renderer::Renderer;
 use timer::Timer;
 
@@ -40,6 +40,9 @@ impl Engine {
             let mut _delta = self.world.write_resource::<DeltaTime>();
             _delta.0 = self.timer.tick_delta() as f32;
         }
+
+        // input
+        self.run_input();
 
         // do stuff here
         use specs::RunNow;
@@ -121,8 +124,8 @@ impl Engine {
         self.entities.push(
             camera(
                 &mut self.world,
-                vec3( 0.0,0.0,0.1 ),
-                vec3( -3.0,0.0,-3.0 ),
+                vec3( 0.0,0.0,0.0 ),
+                vec3( 0.0,0.0,0.0 ),
             )
         );
 
@@ -153,13 +156,34 @@ impl Engine {
         self.timer.get_delta() as f32
     }
 
-    pub fn keys(&self) -> &KeyMap {
-        &self.keys
+    pub fn keys(&mut self) -> &mut KeyMap {
+        &mut self.keys
     }
 
     pub fn run_input(&mut self) {
-        if self.keys.key(self.keys.FORWARD) {
-            
+
+        let velocity : f32 = 5.0;
+
+        let mut _camera_storage = self.world().write_storage::<Camera>();
+
+        for camera in (&mut _camera_storage).join() {
+            let forward : Vec3
+                = normalize(&camera.rotation);
+            let right : Vec3
+                = normalize(&cross::<f32,U1>(&camera.rotation, &vec3(0.0, 1.0, 0.0)));
+
+            if self.keys.get(FORWARD) {
+                camera.target -= forward * self.delta() * velocity;
+            }
+            if self.keys.get(BACKWARD) {
+                camera.target += forward * self.delta() * velocity;
+            }
+            if self.keys.get(LEFTWARD) {
+                camera.target += right * self.delta() * velocity;
+            }
+            if self.keys.get(RIGHTWARD) {
+                camera.target -= right * self.delta() * velocity;
+            }
         }
     }
 }

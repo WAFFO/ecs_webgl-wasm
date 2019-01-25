@@ -257,20 +257,8 @@ impl Renderer {
         let mut result = glm::Mat4::identity();
 
         for camera in (&_camera_storage).join() {
-
-            //   side view    |    top view
-            //      c         | t<----x cos(yaw)
-            //     /|y sin(p) |   \  |
-            //    / |         |    \ |
-            //   /  |         |     \|z sin(yaw)
-            // t<---|xz cos(p)|      c
-
             result = glm::look_at(
-                &(camera.target+vec3(
-                    camera.rotation.y.cos()*camera.rotation.x.cos()*camera.rotation.z,
-                    camera.rotation.y.sin()*camera.rotation.z,
-                    camera.rotation.y.cos()*camera.rotation.x.sin()*camera.rotation.z,
-                )),
+                &(camera.target+camera.rotation),
                 &camera.target,
                 &vec3(0.0, 1.0, 0.0),
             );
