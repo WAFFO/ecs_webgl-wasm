@@ -95,7 +95,7 @@ impl Engine {
             test_3d(
                 &mut self.world,
                 self.mesh_manager.load(String::from("debug_color_box")),
-                vec3( -7.0, 0.0, -1.0 ),
+                vec3( 0.0, 7.0, 0.0 ),
                 1.0,
                 vec3( 0.0, 0.0, -0.45 ),
             )
@@ -105,7 +105,7 @@ impl Engine {
             test_3d(
                 &mut self.world,
                 self.mesh_manager.load(String::from("debug_d20")),
-                vec3( -3.0, 0.0, -7.0 ),
+                vec3( 0.0, 0.0, 7.0 ),
                 2.0,
                 vec3( 1.0, 0.0, -0.45 ),
             )
@@ -114,8 +114,8 @@ impl Engine {
         self.entities.push(
             test_3d(
                 &mut self.world,
-                self.mesh_manager.load(String::from("debug_color_box")),
-                vec3( -5.0, 1.0, -7.0 ),
+                self.mesh_manager.load(String::from("debug_box")),
+                vec3( 7.0, 0.0, 0.0 ),
                 0.5,
                 vec3( 1.0, 0.0, -0.45 ),
             )

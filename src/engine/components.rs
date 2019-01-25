@@ -73,9 +73,9 @@ pub struct Camera {
 
 impl Camera {
     pub fn update(&mut self) {
-        self.rotation[0] = self.pitch.cos() * self.yaw.cos() * self.pole_arm;
+        self.rotation[0] = self.pitch.cos() * self.yaw.sin() * self.pole_arm;
         self.rotation[1] = self.pitch.sin() * self.pole_arm;
-        self.rotation[2] = self.pitch.cos() * self.yaw.sin() * self.pole_arm;
+        self.rotation[2] = self.pitch.cos() * self.yaw.cos() * self.pole_arm;
     }
 }
 

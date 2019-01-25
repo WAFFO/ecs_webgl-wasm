@@ -17,7 +17,7 @@ impl Engine {
         let mut _camera_storage = self.world().write_storage::<Camera>();
 
         for camera in (&mut _camera_storage).join() {
-            camera.yaw += x * self.delta();
+            camera.yaw -= x * self.delta();
             camera.pitch += y * self.delta();
 
             if camera.pitch > PI/2.0 - 0.1 {
@@ -26,6 +26,20 @@ impl Engine {
             else if camera.pitch < -PI/2.0 + 0.1 {
                 camera.pitch = -PI/2.0 + 0.1;
             }
+            camera.update();
+        }
+    }
+    #[wasm_bindgen]
+    pub fn mouse_scroll(&mut self, s: f32) {
+        let mut _camera_storage = self.world().write_storage::<Camera>();
+
+        for camera in (&mut _camera_storage).join() {
+            camera.pole_arm += s * self.delta();
+
+            if camera.pole_arm < 0.1 {
+                camera.pole_arm = 0.1;
+            }
+
             camera.update();
         }
     }
