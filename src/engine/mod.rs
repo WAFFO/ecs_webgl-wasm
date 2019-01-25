@@ -124,7 +124,8 @@ impl Engine {
         self.entities.push(
             camera(
                 &mut self.world,
-                vec3( 0.0,0.0,0.0 ),
+                0.0,
+                3.14,
                 vec3( 0.0,0.0,0.0 ),
             )
         );
