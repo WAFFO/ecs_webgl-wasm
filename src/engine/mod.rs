@@ -131,6 +131,8 @@ impl Engine {
 
         self.world.maintain();
 
+        self.mouse_move(0.0,0.0);
+
     }
 
     fn build_world() -> World {
