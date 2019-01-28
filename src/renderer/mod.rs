@@ -11,8 +11,8 @@ use engine::mesh_manager::{MeshManager, mesh::MeshIndex};
 use javascript::get_canvas;
 
 pub struct Renderer {
-    attribute: (u32, u32),
-    buffer:    (web_sys::WebGlBuffer, web_sys::WebGlBuffer),
+    attribute: (u32, u32, u32),
+    buffer:    (web_sys::WebGlBuffer, web_sys::WebGlBuffer, web_sys::WebGlBuffer),
     context:    web_sys::WebGl2RenderingContext,
     canvas:     web_sys::HtmlCanvasElement,
     uniform:   (WebGlUniformLocation, WebGlUniformLocation, WebGlUniformLocation),
@@ -52,9 +52,9 @@ impl Renderer {
         context.bind_vertex_array(Some(&vao));
 
         // positions in the shader
-        let mut attribute: (u32, u32) = (0, 0);
-        attribute.0 = context.get_attrib_location(&program, "a_position") as u32;
-        attribute.1 = context.get_attrib_location(&program, "a_color") as u32;
+        let a_position = context.get_attrib_location(&program, "a_position") as u32;
+        let a_color = context.get_attrib_location(&program, "a_color") as u32;
+//        attribute.2 = context.get_attrib_location(&program, "a_normal") as u32;
 
         // Attributes in shaders come from buffers, first get the buffer
         let buffer = context.create_buffer().ok_or("failed to create a vertex buffer")?;
@@ -67,6 +67,10 @@ impl Renderer {
         // index buffer
 //        let index_buffer = context.create_buffer().ok_or("failed to create an index buffer")?;
 //        context.bind_buffer(WebGl2RenderingContext::ELEMENT_ARRAY_BUFFER, Some(&index_buffer));
+
+        // normal buffer
+        let normal_buffer = context.create_buffer().ok_or("failed to create a normal buffer")?;
+//        context.bind_buffer(WebGl2RenderingContext::ARRAY_BUFFER, Some(&normal_buffer));
 
         // Get uniform variable locations from our shaders
         let u_projection =
@@ -88,8 +92,8 @@ impl Renderer {
 
         // Return our WebGL object
         Ok(Renderer {
-            attribute,
-            buffer: (buffer, color_buffer),
+            attribute: (a_position, a_color, 0),
+            buffer: (buffer, color_buffer, normal_buffer),
             context,
             canvas,
             uniform: (u_projection, u_view, u_matrix),
@@ -187,10 +191,11 @@ impl Renderer {
 
     fn buffer_data(&self, mesh_manager: &mut MeshManager) -> Result<(), JsValue> {
 
-        let (vertices, colors) = mesh_manager.get_storage();
+        let (vertices, colors, normals) = mesh_manager.get_storage();
         let vertices = vertices.as_slice();
         let colors = colors.as_slice();
 //        let indices = indices.as_slice();
+        let normals = normals.as_slice();
 
         // Get the buffer out of WebAssembly memory
         let memory_buffer = wasm_bindgen::memory()
@@ -206,6 +211,9 @@ impl Renderer {
 //        let indices_location = indices.as_ptr() as u32 / 2;
 //        let index_array = js_sys::Uint16Array::new(&memory_buffer)
 //            .subarray(indices_location, indices_location + indices.len() as u32);
+        let normals_location = normals.as_ptr() as u32 / 4;
+        let normal_array = js_sys::Float32Array::new(&memory_buffer)
+            .subarray(normals_location, normals_location + normals.len() as u32);
 
         // start of vertex binding
         self.context.bind_buffer(WebGl2RenderingContext::ARRAY_BUFFER, Some(&self.buffer.0));
@@ -220,7 +228,6 @@ impl Renderer {
         // Attributes need to be enabled before use
         self.context.enable_vertex_attrib_array(self.attribute.0);
 
-
         // start of color binding
         self.context.bind_buffer(WebGl2RenderingContext::ARRAY_BUFFER, Some(&self.buffer.1));
         // Bind buffer to generic vertex attribute of the current vertex buffer object
@@ -234,7 +241,6 @@ impl Renderer {
         // Attributes need to be enabled before use
         self.context.enable_vertex_attrib_array(self.attribute.1);
 
-
         // start of index binding
 //        self.context.bind_buffer(WebGl2RenderingContext::ELEMENT_ARRAY_BUFFER, Some(&self.buffer.2));
 //        // Buffer_data will copy the data to the GPU memory
@@ -243,6 +249,19 @@ impl Renderer {
 //            &index_array,
 //            WebGl2RenderingContext::STATIC_DRAW,
 //        );
+
+        // start of color binding
+//        self.context.bind_buffer(WebGl2RenderingContext::ARRAY_BUFFER, Some(&self.buffer.2));
+//        // Bind buffer to generic vertex attribute of the current vertex buffer object
+//        self.context.vertex_attrib_pointer_with_i32(self.attribute.2, 4, WebGl2RenderingContext::FLOAT, false, 0, 0);
+//        // Buffer_data will copy the data to the GPU memory
+//        self.context.buffer_data_with_array_buffer_view(
+//            WebGl2RenderingContext::ARRAY_BUFFER,
+//            &normal_array,
+//            WebGl2RenderingContext::STATIC_DRAW,
+//        );
+//        // Attributes need to be enabled before use
+//        self.context.enable_vertex_attrib_array(self.attribute.2);
 
         Ok(())
     }

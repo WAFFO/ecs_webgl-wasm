@@ -10,6 +10,7 @@ impl Explodable for MeshIndexed {
         let mut mesh = Mesh {
             vertices: Vec::new(),
             colors: Vec::new(),
+            normals: Vec::new(),
         };
 
         let mut count: usize = 0;
@@ -24,6 +25,8 @@ impl Explodable for MeshIndexed {
             count += 1;
         };
 
+        mesh.set_normals();
+
         mesh
     }
 }
@@ -33,6 +36,7 @@ impl Explodable for MeshCompressed {
         let mut mesh = Mesh {
             vertices: Vec::new(),
             colors: Vec::new(),
+            normals: Vec::new(),
         };
 
         for i in self.v_indices {
@@ -49,6 +53,8 @@ impl Explodable for MeshCompressed {
                 mesh.colors.push(self.colors[(i * 4 + 3) as usize]);
             }
         };
+
+        mesh.set_normals();
 
         mesh
     }

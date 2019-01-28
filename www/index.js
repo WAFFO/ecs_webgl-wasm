@@ -37,7 +37,7 @@
     }
 
     function updateMouse(e) { Engine.mouse_move(e.movementX, e.movementY); }
-    function updateScroll(e) { console.log("scrolljs");Engine.mouse_scroll(e.deltaY); }
+    function updateScroll(e) { Engine.mouse_scroll(e.deltaY); }
     function keyDown(e) { Engine.key_down(e.keyCode); }
     function keyUp(e) { Engine.key_up(e.keyCode); }
 

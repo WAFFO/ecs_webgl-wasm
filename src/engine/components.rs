@@ -65,10 +65,10 @@ pub struct Camera {
 }
 
 //   side view    |    top view
-//      c         | t<----x cos(yaw)
+//      c         | t<----z cos(yaw)
 //     /|y sin(p) |   \  |
 //    / |         |    \ |
-//   /  |         |     \|z sin(yaw)
+//   /  |         |     \|x sin(yaw)
 // t<---|xz cos(p)|      c
 
 impl Camera {

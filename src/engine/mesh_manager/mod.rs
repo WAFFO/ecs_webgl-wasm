@@ -47,7 +47,7 @@ impl MeshManager {
         id
     }
 
-    pub fn get_storage(&mut self) -> (&Vec<f32>, &Vec<f32>) {
+    pub fn get_storage(&mut self) -> (&Vec<f32>, &Vec<f32>, &Vec<f32>) {
         self.updated = false;
         self.storage.get_storage()
     }
