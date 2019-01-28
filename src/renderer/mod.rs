@@ -38,10 +38,10 @@ impl Renderer {
             &context,
             "glsl/basic_vertex.glsl",
             "glsl/basic_fragment.glsl",
-        );
+        )?;
 
         // A WebGLProgram is the object that holds the two compiled shaders
-        context.use_program(Some(&program));
+        shader.use_shader(&context);
 
         // create a vertex array object (stores attribute state)
         let vao = context.create_vertex_array()

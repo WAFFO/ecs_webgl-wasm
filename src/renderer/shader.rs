@@ -4,7 +4,7 @@ use wasm_bindgen::JsCast;
 use web_sys::{WebGlProgram, WebGl2RenderingContext, WebGlShader, WebGlUniformLocation};
 
 pub struct Shader {
-
+    program: WebGlProgram,
 }
 
 
@@ -12,20 +12,26 @@ impl Shader {
 
     pub fn new(context: &WebGl2RenderingContext, vertex_str: &str, fragment_str: &str
     ) -> Result<Shader, String> {
-        let vertex_shader = Renderer::compile_shader(
+        let vertex_shader = Shader::compile_shader(
             &context,
             WebGl2RenderingContext::VERTEX_SHADER,
             include_str!(vertex_str),
         )?;
-        let frag_shader = Renderer::compile_shader(
+        let frag_shader = Shader::compile_shader(
             &context,
             WebGl2RenderingContext::FRAGMENT_SHADER,
             include_str!(fragment_str),
         )?;
-        let program = Renderer::link_program(&context, [vert_shader, frag_shader].iter())?;
+        let program = Shader::link_program(&context, [vert_shader, frag_shader].iter())?;
+
+        Ok(Shader{
+            program,
+        })
     }
 
-    pub use_shader(&self)
+    pub fn use_shader(&self, context: &WebGl2RenderingContext) {
+        context.use_program(Some(&self.program));
+    }
 
     fn compile_shader(context: &WebGl2RenderingContext, shader_type: u32, source: &str
     ) -> Result<WebGlShader, String> {
