@@ -34,7 +34,7 @@ impl Engine {
         let mut _camera_storage = self.world().write_storage::<Camera>();
 
         for camera in (&mut _camera_storage).join() {
-            camera.pole_arm += s * self.delta();
+            camera.pole_arm += s/s.abs();
 
             if camera.pole_arm < 0.1 {
                 camera.pole_arm = 0.1;
