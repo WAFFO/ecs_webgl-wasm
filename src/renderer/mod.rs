@@ -210,6 +210,7 @@ impl Renderer {
 
         let mut result = glm::Mat4::identity();
 
+        // TODO, avoid using a loop? .get() .get_unchecked()
         for camera in (&_camera_storage).join() {
             result = glm::look_at(
                 &(camera.target+camera.rotation),
@@ -229,7 +230,7 @@ impl Renderer {
         let _mesh_storage = world.read_storage::<components::StaticMesh>();
 
         for (transform, mesh) in (&_transform_storage, &_mesh_storage).join() {
-            if let Some(mesh_index) = mesh_manager.get(mesh.mesh_id.clone()) {
+            if let Some(mesh_index) = mesh_manager.get(&mesh.mesh_id) {
                 let matrix = glm::translate(
                     &glm::Mat4::identity(),
                     &transform.translation,

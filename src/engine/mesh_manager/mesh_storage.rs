@@ -26,7 +26,7 @@ impl MeshStorage {
         self.registry.get(id)
     }
 
-    pub fn store(&mut self, id: UUID, mesh: Mesh) {
+    pub fn store(&mut self, id: UUID, mesh: &Mesh) {
         let mesh_index = MeshIndex {
             index: (self.vertices.len()/3) as i32,
             count: (mesh.vertices.len()/3) as i32,

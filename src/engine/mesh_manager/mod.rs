@@ -30,17 +30,17 @@ impl MeshManager {
     }
 
     pub fn load(&mut self, id: UUID) -> UUID {
-        if let None = self.storage.get(&id) {
+        if self.storage.get(&id).is_none() {
             if id == "debug_box" {
-                self.storage.store(id.clone(),mesh_loader::load_debug_cube().explode());
+                self.storage.store(id.clone(),&mesh_loader::load_debug_cube().explode());
                 self.updated = true;
             }
             else if id == "debug_color_box" {
-                self.storage.store(id.clone(),mesh_loader::load_debug_color_cube().explode());
+                self.storage.store(id.clone(),&mesh_loader::load_debug_color_cube().explode());
                 self.updated = true;
             }
             else if id == "debug_d20" {
-                self.storage.store(id.clone(),mesh_loader::load_debug_d20().explode());
+                self.storage.store(id.clone(),&mesh_loader::load_debug_d20().explode());
                 self.updated = true;
             }
         }
@@ -52,7 +52,7 @@ impl MeshManager {
         self.storage.get_storage()
     }
 
-    pub fn get(&self, id: UUID) -> Option<MeshIndex> {
+    pub fn get(&self, id: &UUID) -> Option<MeshIndex> {
         self.storage.get(&id).cloned()
     }
 
@@ -60,4 +60,10 @@ impl MeshManager {
         self.updated
     }
 
+}
+
+impl Default for MeshManager {
+    fn default() -> Self {
+        Self::new()
+    }
 }

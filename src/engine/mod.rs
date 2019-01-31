@@ -121,11 +121,12 @@ impl Engine {
             )
         );
 
+        use std::f32::consts::PI;
         self.entities.push(
             camera(
                 &mut self.world,
                 0.0,
-                3.14,
+                PI,
                 vec3( 0.0,0.0,0.0 ),
             )
         );

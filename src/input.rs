@@ -67,7 +67,7 @@ impl Engine {
     }
 }
 
-#[derive(PartialEq, Eq, Hash)]
+#[derive(PartialEq, Eq, Hash, Clone, Copy)]
 pub enum Key {
     FORWARD,
     BACKWARD,
@@ -102,13 +102,13 @@ impl KeyMap {
         map
     }
 
-    pub fn val(&self, key: &Key) -> usize{
-        if let Some(v) = self.map.get(key) { *v }
+    pub fn val(&self, key: Key) -> usize{
+        if let Some(v) = self.map.get(&key) { *v }
         else { 0 as usize }
     }
 
     pub fn get(&self, key: Key) -> bool {
-        self.board[self.val(&key)]
+        self.board[self.val(key)]
     }
 
     pub fn press(&mut self, key_val: i32) {
@@ -117,5 +117,11 @@ impl KeyMap {
 
     pub fn release(&mut self, key_val: i32) {
         self.board[key_val as usize] = false;
+    }
+}
+
+impl Default for KeyMap {
+    fn default() -> Self {
+        Self::new()
     }
 }

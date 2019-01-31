@@ -28,3 +28,9 @@ impl Timer {
         self.delta
     }
 }
+
+impl Default for Timer {
+    fn default() -> Self {
+        Self::new()
+    }
+}

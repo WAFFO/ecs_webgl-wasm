@@ -40,7 +40,7 @@ impl Mesh {
         if self.vertices.len() % 9 != 0 {
             panic!("Mesh has {} vertices, this isn't a multiple of 9!",self.vertices.len());
         }
-        if self.normals.len() > 0 {
+        if !self.normals.is_empty() {
             self.normals = Vec::new();
         }
         let mut i: usize = 0;
@@ -51,12 +51,12 @@ impl Mesh {
                 i + 6,
             );
             let U = (
-                self.vertices[P.1+0] - self.vertices[P.0+0],
+                self.vertices[P.1  ] - self.vertices[P.0  ],
                 self.vertices[P.1+1] - self.vertices[P.0+1],
                 self.vertices[P.1+2] - self.vertices[P.0+2],
             );
             let V = (
-                self.vertices[P.2+0] - self.vertices[P.0+0],
+                self.vertices[P.2  ] - self.vertices[P.0  ],
                 self.vertices[P.2+1] - self.vertices[P.0+1],
                 self.vertices[P.2+2] - self.vertices[P.0+2],
             );
