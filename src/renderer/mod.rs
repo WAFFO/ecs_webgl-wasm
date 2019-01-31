@@ -18,7 +18,7 @@ pub struct Renderer {
     buffer:    (web_sys::WebGlBuffer, web_sys::WebGlBuffer, web_sys::WebGlBuffer),
     context:    web_sys::WebGl2RenderingContext,
     canvas:     web_sys::HtmlCanvasElement,
-    uniform:   (WebGlUniformLocation, WebGlUniformLocation, WebGlUniformLocation),
+    shader:     Shader,
     vao:        web_sys::WebGlVertexArrayObject,
 }
 
@@ -36,8 +36,8 @@ impl Renderer {
         // Compile our shaders
         let shader = Shader::new(
             &context,
-            "glsl/basic_vertex.glsl",
-            "glsl/basic_fragment.glsl",
+            include_str!("glsl/basic_vertex.glsl"),
+            include_str!("glsl/basic_fragment.glsl"),
         )?;
 
         // A WebGLProgram is the object that holds the two compiled shaders
@@ -49,9 +49,9 @@ impl Renderer {
         context.bind_vertex_array(Some(&vao));
 
         // positions in the shader
-        let a_position = context.get_attrib_location(&program, "a_position") as u32;
-        let a_color = context.get_attrib_location(&program, "a_color") as u32;
-//        attribute.2 = context.get_attrib_location(&program, "a_normal") as u32;
+        let a_position = 0 as u32;
+        let a_color = 1 as u32;
+//        attribute.2 = 2 as u32;
 
         // Attributes in shaders come from buffers, first get the buffer
         let buffer = context.create_buffer().ok_or("failed to create a vertex buffer")?;
@@ -61,24 +61,9 @@ impl Renderer {
         let color_buffer = context.create_buffer().ok_or("failed to create a color buffer")?;
         context.bind_buffer(WebGl2RenderingContext::ARRAY_BUFFER, Some(&color_buffer));
 
-        // index buffer
-//        let index_buffer = context.create_buffer().ok_or("failed to create an index buffer")?;
-//        context.bind_buffer(WebGl2RenderingContext::ELEMENT_ARRAY_BUFFER, Some(&index_buffer));
-
         // normal buffer
         let normal_buffer = context.create_buffer().ok_or("failed to create a normal buffer")?;
 //        context.bind_buffer(WebGl2RenderingContext::ARRAY_BUFFER, Some(&normal_buffer));
-
-        // Get uniform variable locations from our shaders
-        let u_projection =
-            context.get_uniform_location(&program, "u_projection")
-                .expect("Could not find u_camera.");
-        let u_view =
-            context.get_uniform_location(&program, "u_view")
-            .expect("Could not find u_camera.");
-        let u_matrix =
-            context.get_uniform_location(&program, "u_matrix")
-            .expect("Could not find u_matrix.");
 
         // Cull triangles (counter-clockwise = front facing)
         context.enable(WebGl2RenderingContext::CULL_FACE);
@@ -93,7 +78,7 @@ impl Renderer {
             buffer: (buffer, color_buffer, normal_buffer),
             context,
             canvas,
-            uniform: (u_projection, u_view, u_matrix),
+            shader,
             vao,
         })
     }
@@ -115,15 +100,13 @@ impl Renderer {
 
         // camera stuff
         let mut proj = Renderer::build_projection();
-        let mut proj = glm::value_ptr_mut(&mut proj);
         let mut view = Renderer::build_view(&world);
-        let mut view = glm::value_ptr_mut(&mut view);
 
         // u_projection
-        self.context.uniform_matrix4fv_with_f32_array(Some(&self.uniform.0), false, &mut proj);
+        self.shader.set_mat4(&self.context,"u_projection", &mut proj);
 
         // u_view
-        self.context.uniform_matrix4fv_with_f32_array(Some(&self.uniform.1), false, &mut view);
+        self.shader.set_mat4(&self.context,"u_view", &mut view);
 
         self.draw_arrays(world, mesh_manager);
 
@@ -202,7 +185,7 @@ impl Renderer {
 //            WebGl2RenderingContext::STATIC_DRAW,
 //        );
 
-        // start of color binding
+        // start of normal binding
 //        self.context.bind_buffer(WebGl2RenderingContext::ARRAY_BUFFER, Some(&self.buffer.2));
 //        // Bind buffer to generic vertex attribute of the current vertex buffer object
 //        self.context.vertex_attrib_pointer_with_i32(self.attribute.2, 4, WebGl2RenderingContext::FLOAT, false, 0, 0);
@@ -274,16 +257,15 @@ impl Renderer {
         matrices
     }
 
-    fn draw_arrays(&self, world: &World, mesh_manager: &MeshManager){
+    fn draw_arrays(&mut self, world: &World, mesh_manager: &MeshManager){
         let matrices = Renderer::build_matrices(world, mesh_manager);
 
         self.context.bind_vertex_array(Some(&self.vao));
 
         for (mut matrix, mesh_index) in matrices {
-            let mut _matrix_ptr = glm::value_ptr_mut(&mut matrix);
 
             // u_matrix
-            self.context.uniform_matrix4fv_with_f32_array(Some(&self.uniform.2), false, &mut _matrix_ptr);
+            self.shader.set_mat4(&self.context,"u_matrix",&mut matrix);
 
             // Draw our shape (Triangles, first_index, count) Our vertex shader will run $count times.
             self.context.draw_arrays(

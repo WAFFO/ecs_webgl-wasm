@@ -1,7 +1,7 @@
 #version 300 es
-in vec3 a_position;
-in vec4 a_color;
-//in vec3 a_normal;
+layout(location = 0) in vec3 a_position;
+layout(location = 1) in vec4 a_color;
+//layout(location = 2) in vec3 a_normal;
 
 uniform mat4 u_projection;
 uniform mat4 u_view;

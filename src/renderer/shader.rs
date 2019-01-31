@@ -1,31 +1,35 @@
-use js_sys::WebAssembly;
-use wasm_bindgen::prelude::*;
-use wasm_bindgen::JsCast;
+use std::collections::HashMap;
+
 use web_sys::{WebGlProgram, WebGl2RenderingContext, WebGlShader, WebGlUniformLocation};
+use glm::{value_ptr_mut};
 
 pub struct Shader {
     program: WebGlProgram,
+    uniform: HashMap<&'static str, WebGlUniformLocation>,
 }
 
-
+#[allow(dead_code)]
 impl Shader {
 
-    pub fn new(context: &WebGl2RenderingContext, vertex_str: &str, fragment_str: &str
+    pub fn new(context: &WebGl2RenderingContext, vertex_str: &'static str, fragment_str: &'static str
     ) -> Result<Shader, String> {
         let vertex_shader = Shader::compile_shader(
             &context,
             WebGl2RenderingContext::VERTEX_SHADER,
-            include_str!(vertex_str),
+            vertex_str,
         )?;
-        let frag_shader = Shader::compile_shader(
+        let fragment_shader = Shader::compile_shader(
             &context,
             WebGl2RenderingContext::FRAGMENT_SHADER,
-            include_str!(fragment_str),
+            fragment_str,
         )?;
-        let program = Shader::link_program(&context, [vert_shader, frag_shader].iter())?;
+        let program = Shader::link_program(&context, [vertex_shader, fragment_shader].iter())?;
+
+        let uniform = HashMap::new();
 
         Ok(Shader{
             program,
+            uniform,
         })
     }
 
@@ -76,5 +80,85 @@ impl Shader {
                 .get_program_info_log(&program)
                 .unwrap_or_else(|| "Unknown error creating program object".into()))
         }
+    }
+
+    // utility uniform functions
+    pub fn set_bool(&mut self, context: &WebGl2RenderingContext, name: &'static str, value: bool) {
+        context.uniform1i(Some(&self.get_uniform_location(&context, name)), value as i32);
+    }
+
+    pub fn set_int(&mut self, context: &WebGl2RenderingContext, name: &'static str, value: i32) {
+        context.uniform1i(Some(&self.get_uniform_location(&context, name)), value);
+    }
+
+    pub fn set_float(&mut self, context: &WebGl2RenderingContext, name: &'static str, value: f32) {
+        context.uniform1f(Some(&self.get_uniform_location(&context, name)), value);
+    }
+
+    pub fn set_vec2(&mut self, context: &WebGl2RenderingContext, name: &'static str, value: &mut glm::Vec2) {
+        context.uniform2fv_with_f32_array(
+            Some(&self.get_uniform_location(&context, name)),
+            &mut (value_ptr_mut(value)),
+        );
+    }
+    pub fn set_vec2_xy(&mut self, context: &WebGl2RenderingContext, name: &'static str, x: f32, y: f32) {
+        context.uniform2f(Some(&self.get_uniform_location(&context, name)), x, y);
+    }
+
+    pub fn set_vec3(&mut self, context: &WebGl2RenderingContext, name: &'static str, value: &mut glm::Vec3) {
+        context.uniform3fv_with_f32_array(
+            Some(&self.get_uniform_location(&context, name)),
+            &mut (value_ptr_mut(value)),
+        );
+    }
+    pub fn set_vec3_xyz(&mut self, context: &WebGl2RenderingContext, name: &'static str, x: f32, y: f32, z: f32) {
+        context.uniform3f(Some(&self.get_uniform_location(&context, name)), x, y, z);
+    }
+
+    pub fn set_vec4(&mut self, context: &WebGl2RenderingContext, name: &'static str, value: &mut glm::Vec4) {
+        context.uniform4fv_with_f32_array(
+            Some(&self.get_uniform_location(&context, name)),
+            &mut (value_ptr_mut(value)),
+        );
+    }
+    pub fn set_vec4_xyzw(&mut self, context: &WebGl2RenderingContext, name: &'static str, x: f32, y: f32, z: f32, w: f32) {
+        context.uniform4f(Some(&self.get_uniform_location(&context, name)), x, y, z, w);
+    }
+
+    pub fn set_mat2(&mut self, context: &WebGl2RenderingContext, name: &'static str, mat: &mut glm::Mat2) {
+        context.uniform_matrix2fv_with_f32_array(
+            Some(&self.get_uniform_location(&context, name)),
+            false,
+            &mut (value_ptr_mut(mat)),
+        );
+    }
+
+    pub fn set_mat3(&mut self, context: &WebGl2RenderingContext, name: &'static str, mat: &mut glm::Mat3) {
+        context.uniform_matrix3fv_with_f32_array(
+            Some(&self.get_uniform_location(&context, name)),
+            false,
+            &mut (value_ptr_mut(mat)),
+        );
+    }
+
+    pub fn set_mat4(&mut self, context: &WebGl2RenderingContext, name: &'static str, mat: &mut glm::Mat4) {
+        context.uniform_matrix4fv_with_f32_array(
+            Some(&self.get_uniform_location(&context, name)),
+            false,
+            &mut (value_ptr_mut(mat)),
+        );
+    }
+
+    // hash map cache
+    pub fn get_uniform_location(&mut self, context: &WebGl2RenderingContext, name: &'static str
+    ) -> WebGlUniformLocation {
+        let location = if let Some(x) = self.uniform.get(name){
+            x.clone()
+        } else {
+            context.get_uniform_location(&self.program, name)
+                .expect("Shader Error: Could not find shader.")
+        };
+        self.uniform.insert(name,location.clone());
+        location
     }
 }
