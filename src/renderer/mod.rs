@@ -1,7 +1,7 @@
 use js_sys::WebAssembly;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
-use web_sys::{WebGlProgram, WebGl2RenderingContext, WebGlShader, WebGlUniformLocation};
+use web_sys::{HtmlCanvasElement, WebGlProgram, WebGlBuffer, WebGl2RenderingContext, WebGlShader, WebGlUniformLocation, WebGlVertexArrayObject};
 use specs::{World, Join};
 use glm;
 use glm::vec3;
@@ -15,17 +15,17 @@ use javascript::get_canvas;
 
 pub struct Renderer {
     attribute: (u32, u32, u32),
-    buffer:    (web_sys::WebGlBuffer, web_sys::WebGlBuffer, web_sys::WebGlBuffer),
-    context:    web_sys::WebGl2RenderingContext,
-    canvas:     web_sys::HtmlCanvasElement,
+    buffer:    (WebGlBuffer, WebGlBuffer, WebGlBuffer),
+    context:    WebGl2RenderingContext,
+    canvas:     HtmlCanvasElement,
     shader:     Shader,
-    vao:        web_sys::WebGlVertexArrayObject,
+    vao:        WebGlVertexArrayObject,
 }
 
 impl Renderer {
     pub fn new() -> Result<(Renderer), JsValue> {
         // Gather our canvas from the DOM
-        let canvas: web_sys::HtmlCanvasElement = get_canvas()?;
+        let canvas: HtmlCanvasElement = get_canvas()?;
 
         // Cast our canvas into a WebGl context
         let context = canvas
@@ -92,14 +92,17 @@ impl Renderer {
 
         // set resolution to the canvas
         Renderer::resize_canvas_to_display_size(&mut self.canvas);
-        self.context.viewport(0, 0, self.canvas.width() as i32, self.canvas.width() as i32);
+        self.context.viewport(0, 0, self.canvas.width() as i32, self.canvas.height() as i32);
 
         if mesh_manager.updated() {
             self.buffer_data(mesh_manager)?;
         }
 
         // camera stuff
-        let mut proj = Renderer::build_projection();
+        let mut proj = Renderer::build_projection(
+            self.canvas.width() as f32,
+            self.canvas.height() as f32,
+        );
         let mut view = Renderer::build_view(&world);
 
         // u_projection
@@ -115,7 +118,7 @@ impl Renderer {
     
     // non pub //
 
-    fn resize_canvas_to_display_size(canvas: &mut web_sys::HtmlCanvasElement) {
+    fn resize_canvas_to_display_size(canvas: &mut HtmlCanvasElement) {
         let w = canvas.client_width() as u32;
         let h = canvas.client_height() as u32;
         if canvas.width() != w || canvas.height() != h {
@@ -201,8 +204,8 @@ impl Renderer {
         Ok(())
     }
 
-    fn build_projection() -> glm::Mat4 {
-        glm::perspective(1.0, 45.0, 0.1, 200.0)
+    fn build_projection(width: f32, height: f32) -> glm::Mat4 {
+        glm::perspective( width/height, 45.0, 0.1, 200.0)
     }
 
     fn build_view(world: &World) -> glm::Mat4 {
