@@ -11,22 +11,36 @@ use javascript;
 #[wasm_bindgen]
 impl Engine {
     #[wasm_bindgen]
-    pub fn mouse_move(&mut self, x: f32, y: f32) {
-        use std::f32::consts::PI;
+    pub fn mouse_click(&mut self, buttons: u32, x: f32, y: f32) {
+        let left = (buttons & 1) > 0;
+        let right = (buttons & 2) > 0;
+        let middle = (buttons & 4) > 0;
+        let m4 = (buttons & 8) > 0;
+        let m5 = (buttons & 16) > 0;
 
-        let mut _camera_storage = self.world().write_storage::<Camera>();
+        // TODO: handle mouse click
+    }
+    #[wasm_bindgen]
+    pub fn mouse_move(&mut self, buttons: u32, x: f32, y: f32) {
 
-        for camera in (&mut _camera_storage).join() {
-            camera.yaw -= x * self.delta();
-            camera.pitch += y * self.delta();
+        let left = (buttons & 1) > 0;
 
-            if camera.pitch > PI/2.0 - 0.1 {
-                camera.pitch = PI/2.0 - 0.1;
+        if left {
+            use std::f32::consts::PI;
+
+            let mut _camera_storage = self.world().write_storage::<Camera>();
+
+            for camera in (&mut _camera_storage).join() {
+                camera.yaw -= x * self.delta();
+                camera.pitch += y * self.delta();
+
+                if camera.pitch > PI / 2.0 - 0.1 {
+                    camera.pitch = PI / 2.0 - 0.1;
+                } else if camera.pitch < -PI / 2.0 + 0.1 {
+                    camera.pitch = -PI / 2.0 + 0.1;
+                }
+                camera.update();
             }
-            else if camera.pitch < -PI/2.0 + 0.1 {
-                camera.pitch = -PI/2.0 + 0.1;
-            }
-            camera.update();
         }
     }
     #[wasm_bindgen]

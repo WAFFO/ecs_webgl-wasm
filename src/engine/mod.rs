@@ -133,7 +133,7 @@ impl Engine {
 
         self.world.maintain();
 
-        self.mouse_move(0.0,0.0);
+        self.mouse_move(1, 0.0,0.0);
 
     }
 

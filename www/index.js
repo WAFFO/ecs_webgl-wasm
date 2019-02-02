@@ -24,11 +24,15 @@
 
     function lockChangeAlert() {
       if (document.pointerLockElement === canvas) {
+        document.addEventListener('mousedown', updateMouse, false);
+        document.addEventListener('mouseup', updateMouse, false);
         document.addEventListener('mousemove', updateMouse, false);
         document.addEventListener('wheel', updateScroll, false);
         document.addEventListener('keydown', keyDown, false);
         document.addEventListener('keyup', keyUp, false);
       } else {
+        document.removeEventListener('mousedown', updateMouse, false);
+        document.removeEventListener('mouseup', updateMouse, false);
         document.removeEventListener('mousemove', updateMouse, false);
         document.removeEventListener('wheel', updateScroll, false);
         document.removeEventListener('keydown', keyDown, false);
@@ -36,7 +40,12 @@
       }
     }
 
-    function updateMouse(e) { Engine.mouse_move(e.movementX, e.movementY); }
+    function updateMouse(e) {
+        if (e.metaKey)
+            Engine.mouse_click(e.buttons, e.movementX, e.movementY);
+        else
+            Engine.mouse_move(e.buttons, e.movementX, e.movementY);
+    }
     function updateScroll(e) { Engine.mouse_scroll(e.deltaY); }
     function keyDown(e) { Engine.key_down(e.keyCode); }
     function keyUp(e) { Engine.key_up(e.keyCode); }
