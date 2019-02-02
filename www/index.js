@@ -12,33 +12,12 @@
 
     var canvas = document.getElementById('canvas');
 
-    canvas.requestPointerLock = canvas.requestPointerLock || canvas.mozRequestPointerLock;
-    document.exitPointerLock = document.exitPointerLock || document.mozExitPointerLock;
-
-    canvas.onclick = function() {
-      canvas.requestPointerLock();
-    };
-
-    document.addEventListener('pointerlockchange', lockChangeAlert, false);
-    document.addEventListener('mozpointerlockchange', lockChangeAlert, false);
-
-    function lockChangeAlert() {
-      if (document.pointerLockElement === canvas) {
-        document.addEventListener('mousedown', updateMouse, false);
-        document.addEventListener('mouseup', updateMouse, false);
-        document.addEventListener('mousemove', updateMouse, false);
-        document.addEventListener('wheel', updateScroll, false);
-        document.addEventListener('keydown', keyDown, false);
-        document.addEventListener('keyup', keyUp, false);
-      } else {
-        document.removeEventListener('mousedown', updateMouse, false);
-        document.removeEventListener('mouseup', updateMouse, false);
-        document.removeEventListener('mousemove', updateMouse, false);
-        document.removeEventListener('wheel', updateScroll, false);
-        document.removeEventListener('keydown', keyDown, false);
-        document.removeEventListener('keyup', keyUp, false);
-      }
-    }
+    document.addEventListener('mousedown', updateMouse, false);
+    document.addEventListener('mouseup', updateMouse, false);
+    document.addEventListener('mousemove', updateMouse, false);
+    document.addEventListener('wheel', updateScroll, false);
+    document.addEventListener('keydown', keyDown, false);
+    document.addEventListener('keyup', keyUp, false);
 
     function updateMouse(e) {
         if (e.metaKey)

@@ -5,13 +5,16 @@
 body {
   margin: 0;
 }
-canvas {
+#canvas {
   width: 100vw; 
   height: 100vh;
   margin: auto;
   position: absolute;
   top:0;bottom:0; /* vertical center */
   left:0;right:0; /* horizontal center */
+}
+#canvas:active {
+  cursor: none;
 }
 #fps {
   position: absolute;
