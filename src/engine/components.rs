@@ -1,6 +1,6 @@
 
 use specs::{Component, VecStorage};
-use glm::{Vec3, vec3};
+use glm::{Vec3, vec3, Vec4, vec4};
 
 use engine::mesh_manager::UUID;
 
@@ -91,6 +91,28 @@ impl Default for Camera {
             pitch: 0.0,
             yaw: 0.0,
             pole_arm: 0.1,
+        }
+    }
+}
+
+
+// entity types
+#[derive(Default)]
+pub struct Solid;
+impl Component for Solid {
+    type Storage = VecStorage<Self>;
+}
+
+pub struct Light{
+    pub color: Vec4,
+}
+impl Component for Light {
+    type Storage = VecStorage<Self>;
+}
+impl Default for Light {
+    fn default() -> Light {
+        Light {
+            color: vec4(1.0, 1.0, 1.0, 1.0),
         }
     }
 }

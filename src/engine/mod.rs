@@ -82,7 +82,7 @@ impl Engine {
     pub fn init(&mut self) {
 
         self.entities.push(
-            test_3d(
+            test_solid(
                 &mut self.world,
                 self.mesh_manager.load(String::from("debug_color_box")),
                 vec3( 0.0, 0.0, 0.0 ),
@@ -92,7 +92,7 @@ impl Engine {
         );
 
         self.entities.push(
-            test_3d(
+            test_solid(
                 &mut self.world,
                 self.mesh_manager.load(String::from("debug_color_box")),
                 vec3( 0.0, 7.0, 0.0 ),
@@ -102,7 +102,7 @@ impl Engine {
         );
 
         self.entities.push(
-            test_3d(
+            test_solid(
                 &mut self.world,
                 self.mesh_manager.load(String::from("debug_d20")),
                 vec3( 0.0, 0.0, 7.0 ),
@@ -112,9 +112,9 @@ impl Engine {
         );
 
         self.entities.push(
-            test_3d(
+            test_light(
                 &mut self.world,
-                self.mesh_manager.load(String::from("debug_box")),
+                self.mesh_manager.load(String::from("debug_d20")),
                 vec3( 7.0, 0.0, 0.0 ),
                 0.5,
                 vec3( 1.0, 0.0, -0.45 ),
@@ -144,6 +144,8 @@ impl Engine {
         world.register::<Velocity>();
         world.register::<StaticMesh>();
         world.register::<Camera>();
+        world.register::<Solid>();
+        world.register::<Light>();
 
         world.add_resource(DeltaTime(0.0));
 

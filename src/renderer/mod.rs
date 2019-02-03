@@ -10,6 +10,7 @@ mod shader;
 
 use self::shader::Shader;
 use engine::components;
+use engine::components::{Transform, StaticMesh, Solid, Light};
 use engine::mesh_manager::{MeshManager, mesh::MeshIndex};
 use javascript::get_canvas;
 
@@ -19,6 +20,7 @@ pub struct Renderer {
     context:    WebGl2RenderingContext,
     canvas:     HtmlCanvasElement,
     shader:     Shader,
+    ls_shader:  Shader,
     vao:        WebGlVertexArrayObject,
 }
 
@@ -39,9 +41,11 @@ impl Renderer {
             include_str!("glsl/basic_vertex.glsl"),
             include_str!("glsl/basic_fragment.glsl"),
         )?;
-
-        // A WebGLProgram is the object that holds the two compiled shaders
-        shader.use_shader(&context);
+        let ls_shader = Shader::new(
+            &context,
+            include_str!("glsl/light_source_vertex.glsl"),
+            include_str!("glsl/light_source_fragment.glsl"),
+        )?;
 
         // create a vertex array object (stores attribute state)
         let vao = context.create_vertex_array()
@@ -79,6 +83,7 @@ impl Renderer {
             context,
             canvas,
             shader,
+            ls_shader,
             vao,
         })
     }
@@ -94,6 +99,9 @@ impl Renderer {
         Renderer::resize_canvas_to_display_size(&mut self.canvas);
         self.context.viewport(0, 0, self.canvas.width() as i32, self.canvas.height() as i32);
 
+        // TODO: bind vao here?
+        self.context.bind_vertex_array(Some(&self.vao));
+
         if mesh_manager.updated() {
             self.buffer_data(mesh_manager)?;
         }
@@ -105,13 +113,19 @@ impl Renderer {
         );
         let mut view = Renderer::build_view(&world);
 
-        // u_projection
+        // basic_shader
+        self.shader.use_shader(&self.context);
         self.shader.set_mat4(&self.context,"u_projection", &mut proj);
-
-        // u_view
         self.shader.set_mat4(&self.context,"u_view", &mut view);
 
-        self.draw_arrays(world, mesh_manager);
+        self.draw_solids(world, mesh_manager);
+
+        // ls_shader
+        self.ls_shader.use_shader(&self.context);
+        self.ls_shader.set_mat4(&self.context,"u_projection", &mut proj);
+        self.ls_shader.set_mat4(&self.context,"u_view", &mut view);
+
+        self.draw_lights(world, mesh_manager);
 
         Ok(())
     }
@@ -226,57 +240,85 @@ impl Renderer {
         result
     }
 
-    fn build_matrices(world: &World, mesh_manager: &MeshManager) -> Vec<(glm::Mat4, MeshIndex)> {
-        let mut matrices: Vec<(glm::Mat4, MeshIndex)> = Vec::new();
-
-        let _transform_storage = world.read_storage::<components::Transform>();
-        let _mesh_storage = world.read_storage::<components::StaticMesh>();
-
-        for (transform, mesh) in (&_transform_storage, &_mesh_storage).join() {
-            if let Some(mesh_index) = mesh_manager.get(&mesh.mesh_id) {
-                let matrix = glm::translate(
-                    &glm::Mat4::identity(),
-                    &transform.translation,
-                );
-                let matrix = glm::rotate_x(
-                    &matrix,
-                    transform.rotation[0],
-                );
-                let matrix = glm::rotate_y(
-                    &matrix,
-                    transform.rotation[1],
-                );
-                let matrix = glm::rotate_z(
-                    &matrix,
-                    transform.rotation[2],
-                );
-                let matrix = glm::scale(
-                    &matrix,
-                    &transform.scale,
-                );
-                matrices.push((matrix, mesh_index));
-            }
+    fn build_matrix(transform: &Transform, mesh: &StaticMesh, mesh_manager: &MeshManager) -> Option<(glm::Mat4, MeshIndex)> {
+        if let Some(mesh_index) = mesh_manager.get(&mesh.mesh_id) {
+            let matrix = glm::translate(
+                &glm::Mat4::identity(),
+                &transform.translation,
+            );
+            let matrix = glm::rotate_x(
+                &matrix,
+                transform.rotation[0],
+            );
+            let matrix = glm::rotate_y(
+                &matrix,
+                transform.rotation[1],
+            );
+            let matrix = glm::rotate_z(
+                &matrix,
+                transform.rotation[2],
+            );
+            let matrix = glm::scale(
+                &matrix,
+                &transform.scale,
+            );
+            Some((matrix, mesh_index))
         }
-
-        matrices
+        else {
+            None
+        }
     }
 
-    fn draw_arrays(&mut self, world: &World, mesh_manager: &MeshManager){
-        let matrices = Renderer::build_matrices(world, mesh_manager);
+    fn draw_solids(&mut self, world: &World, mesh_manager: &MeshManager){
 
-        self.context.bind_vertex_array(Some(&self.vao));
+        let _transform_storage = world.read_storage::<Transform>();
+        let _mesh_storage = world.read_storage::<StaticMesh>();
+        let _solid_storage = world.read_storage::<Solid>();
 
-        for (mut matrix, mesh_index) in matrices {
+        for (transform, mesh, _) in (&_transform_storage, &_mesh_storage, &_solid_storage).join() {
 
-            // u_matrix
-            self.shader.set_mat4(&self.context,"u_matrix",&mut matrix);
+            if let Some((matrix, mesh_index)) = Renderer::build_matrix(&transform, &mesh, &mesh_manager) {
 
-            // Draw our shape (Triangles, first_index, count) Our vertex shader will run $count times.
-            self.context.draw_arrays(
-                WebGl2RenderingContext::TRIANGLES,
-                mesh_index.index,
-                mesh_index.count,
-            );
+                let mut matrix = matrix;
+
+                // u_matrix
+                self.shader.set_mat4(&self.context, "u_matrix", &mut matrix);
+
+                // Draw our shape (Triangles, first_index, count) Our vertex shader will run $count times.
+                self.context.draw_arrays(
+                    WebGl2RenderingContext::TRIANGLES,
+                    mesh_index.index,
+                    mesh_index.count,
+                );
+            }
+        }
+    }
+
+    fn draw_lights(&mut self, world: &World, mesh_manager: &MeshManager){
+
+        let _transform_storage = world.read_storage::<Transform>();
+        let _mesh_storage = world.read_storage::<StaticMesh>();
+        let _light_storage = world.read_storage::<Light>();
+
+        for (transform, mesh, light) in (&_transform_storage, &_mesh_storage, &_light_storage).join() {
+
+            if let Some((matrix, mesh_index)) = Renderer::build_matrix(&transform, &mesh, &mesh_manager) {
+                let mut matrix = matrix;
+                let mut color = light.color;
+
+                // u_matrix
+                self.ls_shader.set_mat4(&self.context, "u_matrix", &mut matrix);
+
+                // u_color
+                self.ls_shader.set_vec4(&self.context, "u_color", &mut color);
+
+                // Draw our shape (Triangles, first_index, count) Our vertex shader will run $count times.
+                self.context.draw_arrays(
+                    WebGl2RenderingContext::TRIANGLES,
+                    mesh_index.index,
+                    mesh_index.count,
+                );
+            }
         }
     }
 }
