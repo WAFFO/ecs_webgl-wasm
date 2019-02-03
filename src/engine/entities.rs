@@ -19,7 +19,7 @@ pub fn test_light(world: &mut World, mesh: UUID, translation: Vec3, scale: f32, 
         .with(Transform  { translation, rotation: vec3( 0.0, 0.0, 0.0 ), scale: vec3(scale, scale, scale) })
         .with(Velocity   { translation: vec3( 0.0, 0.0, 0.0 ), rotation })
         .with(StaticMesh { mesh_id: mesh } )
-        .with(Light { color: vec4(1.0, 0.5, 0.5, 1.0) })
+        .with(Light { color: vec4(1.0, 1.0, 1.0, 1.0) })
         .build()
 }
 

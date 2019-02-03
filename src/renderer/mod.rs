@@ -55,7 +55,7 @@ impl Renderer {
         // positions in the shader
         let a_position = 0 as u32;
         let a_color = 1 as u32;
-//        attribute.2 = 2 as u32;
+        let a_normal = 2 as u32;
 
         // Attributes in shaders come from buffers, first get the buffer
         let buffer = context.create_buffer().ok_or("failed to create a vertex buffer")?;
@@ -67,7 +67,7 @@ impl Renderer {
 
         // normal buffer
         let normal_buffer = context.create_buffer().ok_or("failed to create a normal buffer")?;
-//        context.bind_buffer(WebGl2RenderingContext::ARRAY_BUFFER, Some(&normal_buffer));
+        context.bind_buffer(WebGl2RenderingContext::ARRAY_BUFFER, Some(&normal_buffer));
 
         // Cull triangles (counter-clockwise = front facing)
         context.enable(WebGl2RenderingContext::CULL_FACE);
@@ -78,7 +78,7 @@ impl Renderer {
 
         // Return our WebGL object
         Ok(Renderer {
-            attribute: (a_position, a_color, 0),
+            attribute: (a_position, a_color, a_normal),
             buffer: (buffer, color_buffer, normal_buffer),
             context,
             canvas,
@@ -91,7 +91,7 @@ impl Renderer {
     pub fn draw(&mut self, world: &World, mesh_manager: &mut MeshManager) -> Result<(), JsValue> {
 
         // Draw over the entire canvas and clear buffer to ur present one
-        self.context.clear_color(0.9, 0.9, 0.9, 1.0);
+        self.context.clear_color(0.1, 0.1, 0.1, 1.0);
         self.context.clear_depth(1.0);
         self.context.clear(WebGl2RenderingContext::COLOR_BUFFER_BIT | WebGl2RenderingContext::DEPTH_BUFFER_BIT);
 
@@ -203,17 +203,17 @@ impl Renderer {
 //        );
 
         // start of normal binding
-//        self.context.bind_buffer(WebGl2RenderingContext::ARRAY_BUFFER, Some(&self.buffer.2));
-//        // Bind buffer to generic vertex attribute of the current vertex buffer object
-//        self.context.vertex_attrib_pointer_with_i32(self.attribute.2, 4, WebGl2RenderingContext::FLOAT, false, 0, 0);
-//        // Buffer_data will copy the data to the GPU memory
-//        self.context.buffer_data_with_array_buffer_view(
-//            WebGl2RenderingContext::ARRAY_BUFFER,
-//            &normal_array,
-//            WebGl2RenderingContext::STATIC_DRAW,
-//        );
-//        // Attributes need to be enabled before use
-//        self.context.enable_vertex_attrib_array(self.attribute.2);
+        self.context.bind_buffer(WebGl2RenderingContext::ARRAY_BUFFER, Some(&self.buffer.2));
+        // Bind buffer to generic vertex attribute of the current vertex buffer object
+        self.context.vertex_attrib_pointer_with_i32(self.attribute.2, 3, WebGl2RenderingContext::FLOAT, false, 0, 0);
+        // Buffer_data will copy the data to the GPU memory
+        self.context.buffer_data_with_array_buffer_view(
+            WebGl2RenderingContext::ARRAY_BUFFER,
+            &normal_array,
+            WebGl2RenderingContext::STATIC_DRAW,
+        );
+        // Attributes need to be enabled before use
+        self.context.enable_vertex_attrib_array(self.attribute.2);
 
         Ok(())
     }
@@ -269,7 +269,28 @@ impl Renderer {
         }
     }
 
+    fn get_lights(world: &World) -> Vec<(glm::Vec3, glm::Vec4)> {
+        let _transform_storage = world.read_storage::<Transform>();
+        let _light_storage = world.read_storage::<Light>();
+
+        let mut list: Vec<(glm::Vec3, glm::Vec4)> = Vec::new();
+
+        for (transform, light) in (&_transform_storage, &_light_storage).join() {
+            list.push((transform.translation, light.color));
+        }
+
+        list
+    }
+
     fn draw_solids(&mut self, world: &World, mesh_manager: &MeshManager){
+
+        let lights = Renderer::get_lights(world);
+
+        if !lights.is_empty() {
+            let (pos, color) = lights.get(0).unwrap();
+            self.shader.set_vec3_xyz(&self.context, "u_light_pos",pos.x, pos.y, pos.z);
+            self.shader.set_vec3_xyz(&self.context, "u_light_color", color.x, color.y, color.z);
+        }
 
         let _transform_storage = world.read_storage::<Transform>();
         let _mesh_storage = world.read_storage::<StaticMesh>();
