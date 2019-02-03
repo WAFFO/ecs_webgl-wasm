@@ -80,36 +80,6 @@ impl Engine {
     }
 
     pub fn init(&mut self) {
-//
-//        self.entities.push(
-//            test_solid(
-//                &mut self.world,
-//                self.mesh_manager.load(String::from("debug_color_box")),
-//                vec3( 7.0, 0.0, 0.0 ),
-//                1.0,
-//                vec3( 0.4, 0.4, 0.2 ),
-//            )
-//        );
-//
-//        self.entities.push(
-//            test_solid(
-//                &mut self.world,
-//                self.mesh_manager.load(String::from("debug_d20")),
-//                vec3( 0.0, 7.0, 0.0 ),
-//                1.0,
-//                vec3( 0.0, 0.0, -0.45 ),
-//            )
-//        );
-//
-//        self.entities.push(
-//            test_solid(
-//                &mut self.world,
-//                self.mesh_manager.load(String::from("debug_d20")),
-//                vec3( 0.0, 0.0, 7.0 ),
-//                2.0,
-//                vec3( 1.0, 0.0, -0.45 ),
-//            )
-//        );
 
         self.entities.push(
             test_light(
@@ -121,9 +91,9 @@ impl Engine {
             )
         );
 
-        for i in -2..3 {
-            for k in -2..3 {
-                for l in -2..3 {
+        for i in -1..2 {
+            for k in -1..2 {
+                for l in -1..2 {
                     if i != 0 || k != 0 || l != 0 {
                         self.entities.push(
                             test_solid(
