@@ -240,29 +240,15 @@ impl Renderer {
         result
     }
 
-    fn build_matrix(transform: &Transform, mesh: &StaticMesh, mesh_manager: &MeshManager) -> Option<(glm::Mat4, MeshIndex)> {
+    fn build_vectors<'a>(transform: &'a Transform, mesh: &'a StaticMesh, mesh_manager: &'a MeshManager
+    ) -> Option<(MeshIndex, &'a glm::Vec3, &'a glm::Vec3, &'a glm::Vec3)> {
         if let Some(mesh_index) = mesh_manager.get(&mesh.mesh_id) {
-            let matrix = glm::translate(
-                &glm::Mat4::identity(),
+            Some((
+                mesh_index,
                 &transform.translation,
-            );
-            let matrix = glm::rotate_x(
-                &matrix,
-                transform.rotation[0],
-            );
-            let matrix = glm::rotate_y(
-                &matrix,
-                transform.rotation[1],
-            );
-            let matrix = glm::rotate_z(
-                &matrix,
-                transform.rotation[2],
-            );
-            let matrix = glm::scale(
-                &matrix,
+                &transform.rotation,
                 &transform.scale,
-            );
-            Some((matrix, mesh_index))
+            ))
         }
         else {
             None
@@ -298,12 +284,12 @@ impl Renderer {
 
         for (transform, mesh, _) in (&_transform_storage, &_mesh_storage, &_solid_storage).join() {
 
-            if let Some((matrix, mesh_index)) = Renderer::build_matrix(&transform, &mesh, &mesh_manager) {
+            if let Some((mesh_index, pos, rot, scl)) = Renderer::build_vectors(&transform, &mesh, &mesh_manager) {
 
-                let mut matrix = matrix;
-
-                // u_matrix
-                self.shader.set_mat4(&self.context, "u_matrix", &mut matrix);
+                // model data
+                self.shader.set_vec3_xyz(&self.context, "u_translation", pos.x, pos.y, pos.z);
+                self.shader.set_vec3_xyz(&self.context, "u_rotation", rot.x, rot.y, rot.z);
+                self.shader.set_vec3_xyz(&self.context, "u_scale", scl.x, scl.y, scl.z);
 
                 // Draw our shape (Triangles, first_index, count) Our vertex shader will run $count times.
                 self.context.draw_arrays(
@@ -323,12 +309,14 @@ impl Renderer {
 
         for (transform, mesh, light) in (&_transform_storage, &_mesh_storage, &_light_storage).join() {
 
-            if let Some((matrix, mesh_index)) = Renderer::build_matrix(&transform, &mesh, &mesh_manager) {
-                let mut matrix = matrix;
-                let mut color = light.color;
+            if let Some((mesh_index, pos, rot, scl)) = Renderer::build_vectors(&transform, &mesh, &mesh_manager) {
 
-                // u_matrix
-                self.ls_shader.set_mat4(&self.context, "u_matrix", &mut matrix);
+                // model data
+                self.ls_shader.set_vec3_xyz(&self.context, "u_translation", pos.x, pos.y, pos.z);
+                self.ls_shader.set_vec3_xyz(&self.context, "u_rotation", rot.x, rot.y, rot.z);
+                self.ls_shader.set_vec3_xyz(&self.context, "u_scale", scl.x, scl.y, scl.z);
+
+                let mut color = light.color;
 
                 // u_color
                 self.ls_shader.set_vec4(&self.context, "u_color", &mut color);

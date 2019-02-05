@@ -85,15 +85,15 @@ impl Engine {
             test_light(
                 &mut self.world,
                 self.mesh_manager.load(String::from("debug_color_box")),
-                vec3( 0.0, 1.0, 0.0 ),
+                vec3( 0.0, 0.0, 0.0 ),
                 0.5,
                 vec3( 1.0, 0.0, -0.45 ),
             )
         );
 
-        for i in -1..2 {
-            for k in -1..2 {
-                for l in -1..2 {
+        for i in -3..4 {
+            for k in -3..4 {
+                for l in -3..4 {
                     if i != 0 || k != 0 || l != 0 {
                         self.entities.push(
                             test_solid(
