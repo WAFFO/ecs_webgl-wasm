@@ -13,10 +13,13 @@ impl Shader {
 
     pub fn new(context: &WebGl2RenderingContext, vertex_str: &'static str, fragment_str: &'static str
     ) -> Result<Shader, String> {
+
+        let functions = include_str!("glsl/common_functions.glsl");
+
         let vertex_shader = Shader::compile_shader(
             &context,
             WebGl2RenderingContext::VERTEX_SHADER,
-            vertex_str,
+            &[functions,vertex_str].concat(),
         )?;
         let fragment_shader = Shader::compile_shader(
             &context,
