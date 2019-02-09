@@ -242,7 +242,7 @@ impl Renderer {
     }
 
     fn get_vectors<'a>(transform: &'a Transform, mesh: &'a StaticMesh, mesh_manager: &'a MeshManager
-    ) -> Option<(MeshIndex, &'a glm::Vec3, &'a glm::Vec3, &'a glm::Vec3)> {
+    ) -> Option<(MeshIndex, &'a Vec<f32>, &'a Vec<f32>, &'a Vec<f32>)> {
         if let Some(mesh_index) = mesh_manager.get(&mesh.mesh_id) {
             Some((
                 mesh_index,
@@ -256,14 +256,14 @@ impl Renderer {
         }
     }
 
-    fn get_lights(world: &World) -> Vec<(glm::Vec3, glm::Vec4)> {
+    fn get_lights(world: &World) -> Vec<(Vec<f32>, glm::Vec4)> {
         let _transform_storage = world.read_storage::<Transform>();
         let _light_storage = world.read_storage::<Light>();
 
-        let mut list: Vec<(glm::Vec3, glm::Vec4)> = Vec::new();
+        let mut list: Vec<(Vec<f32>, glm::Vec4)> = Vec::new();
 
         for (transform, light) in (&_transform_storage, &_light_storage).join() {
-            list.push((transform.translation, light.color));
+            list.push((transform.translation.clone(), light.color));
         }
 
         list
@@ -275,7 +275,7 @@ impl Renderer {
 
         if !lights.is_empty() {
             let (pos, color) = lights.get(0).unwrap();
-            self.shader.set_vec3_xyz(&self.context, "u_light_pos",pos.x, pos.y, pos.z);
+            self.shader.set_vec3_xyz(&self.context, "u_light_pos",pos[0], pos[1], pos[2]);
             self.shader.set_vec3_xyz(&self.context, "u_light_color", color.x, color.y, color.z);
         }
 
@@ -288,9 +288,9 @@ impl Renderer {
             if let Some((mesh_index, pos, rot, scl)) = Renderer::get_vectors(&transform, &mesh, &mesh_manager) {
 
                 // model data
-                self.shader.set_vec3_xyz(&self.context, "u_translation", pos.x, pos.y, pos.z);
-                self.shader.set_vec3_xyz(&self.context, "u_rotation", rot.x, rot.y, rot.z);
-                self.shader.set_vec3_xyz(&self.context, "u_scale", scl.x, scl.y, scl.z);
+                self.shader.set_vec3_xyz(&self.context, "u_translation", pos[0], pos[1], pos[2]);
+                self.shader.set_vec3_xyz(&self.context, "u_rotation", rot[0], rot[1], rot[2]);
+                self.shader.set_vec3_xyz(&self.context, "u_scale", scl[0], scl[1], scl[2]);
 
                 // Draw our shape (Triangles, first_index, count) Our vertex shader will run $count times.
                 self.context.draw_arrays(
@@ -313,9 +313,9 @@ impl Renderer {
             if let Some((mesh_index, pos, rot, scl)) = Renderer::get_vectors(&transform, &mesh, &mesh_manager) {
 
                 // model data
-                self.ls_shader.set_vec3_xyz(&self.context, "u_translation", pos.x, pos.y, pos.z);
-                self.ls_shader.set_vec3_xyz(&self.context, "u_rotation", rot.x, rot.y, rot.z);
-                self.ls_shader.set_vec3_xyz(&self.context, "u_scale", scl.x, scl.y, scl.z);
+                self.ls_shader.set_vec3_xyz(&self.context, "u_translation", pos[0], pos[1], pos[2]);
+                self.ls_shader.set_vec3_xyz(&self.context, "u_rotation", rot[0], rot[1], rot[2]);
+                self.ls_shader.set_vec3_xyz(&self.context, "u_scale", scl[0], scl[1], scl[2]);
 
                 let mut color = light.color;
 

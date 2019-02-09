@@ -7,9 +7,9 @@ use engine::mesh_manager::UUID;
 
 // components
 pub struct Transform {
-    pub translation: Vec3,
-    pub rotation: Vec3,
-    pub scale: Vec3,
+    pub translation: Vec<f32>,
+    pub rotation: Vec<f32>,
+    pub scale: Vec<f32>,
 }
 
 impl Component for Transform {
@@ -19,16 +19,16 @@ impl Component for Transform {
 impl Default for Transform {
     fn default() -> Transform {
         Transform {
-            translation: vec3(0.0, 0.0, 0.0),
-            rotation: vec3(0.0, 0.0, 0.0),
-            scale: vec3(0.0, 0.0, 0.0),
+            translation: vec![0.0, 0.0, 0.0],
+            rotation: vec![0.0, 0.0, 0.0],
+            scale: vec![0.0, 0.0, 0.0],
         }
     }
 }
 
 pub struct Velocity {
-    pub translation: Vec3,
-    pub rotation: Vec3,
+    pub translation: Vec<f32>,
+    pub rotation: Vec<f32>,
 }
 
 impl Component for Velocity {
@@ -38,8 +38,8 @@ impl Component for Velocity {
 impl Default for Velocity {
     fn default() -> Velocity {
         Velocity {
-            translation: vec3(0.0, 0.0, 0.0),
-            rotation: vec3(0.0, 0.0, 0.0),
+            translation: vec![0.0, 0.0, 0.0],
+            rotation: vec![0.0, 0.0, 0.0],
         }
     }
 }

@@ -85,9 +85,9 @@ impl Engine {
             test_light(
                 &mut self.world,
                 self.mesh_manager.load(String::from("debug_color_box")),
-                vec3( 0.0, 0.0, 0.0 ),
+                vec![ 0.0, 0.0, 0.0 ],
                 0.5,
-                vec3( 1.0, 0.0, -0.45 ),
+                vec![ 1.0, 0.0, -0.45 ],
             )
         );
 
@@ -99,9 +99,9 @@ impl Engine {
                             test_solid(
                                 &mut self.world,
                                 self.mesh_manager.load(String::from("debug_color_box")),
-                                vec3(6.0 * i as f32, 6.0 * k as f32, 6.0 * l as f32),
+                                vec![6.0 * i as f32, 6.0 * k as f32, 6.0 * l as f32],
                                 1.0,
-                                vec3(1.0, 0.0, -0.45),
+                                vec![1.0, 0.0, -0.45],
                             )
                         );
                     }
