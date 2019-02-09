@@ -156,7 +156,11 @@ impl Engine {
 
     pub fn run_input(&mut self) {
 
-        let velocity : f32 = 5.0;
+        let mut velocity : f32 = 5.0;
+
+        if self.keys.get(SPRINT) {
+            velocity *= 2.0;
+        }
 
         let mut _camera_storage = self.world().write_storage::<Camera>();
 

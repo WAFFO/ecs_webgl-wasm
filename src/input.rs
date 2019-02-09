@@ -87,6 +87,7 @@ pub enum Key {
     BACKWARD,
     LEFTWARD,
     RIGHTWARD,
+    SPRINT,
 }
 
 pub struct KeyMap {
@@ -112,6 +113,7 @@ impl KeyMap {
         map.insert(Key::BACKWARD, 83);
         map.insert(Key::LEFTWARD, 65);
         map.insert(Key::RIGHTWARD, 68);
+        map.insert(Key::SPRINT, 16); // shift
 
         map
     }
