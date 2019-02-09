@@ -3,7 +3,6 @@
 set -ex
 cd "$(dirname $0)/www"
 
-npm install
-npm run serve &
+./server.exe
 
 cd "$(dirname $0)"

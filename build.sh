@@ -3,8 +3,6 @@
 set -ex
 cd "$(dirname $0)"
 
-proj_name=`perl -ne '/name = "(.+)"/ && print $1' Cargo.toml | sed 's/\-/\_/g'`
-
 rustup target add wasm32-unknown-unknown --toolchain stable
 
 if ( ! command -v wasm-bindgen )
@@ -12,6 +10,10 @@ then
     cargo install wasm-bindgen-cli
 fi
 
-cargo build --target wasm32-unknown-unknown
+cargo build -p client --target wasm32-unknown-unknown
+cargo build -p server
 
-wasm-bindgen ./target/wasm32-unknown-unknown/debug/$proj_name.wasm --out-dir ./www/wasm
+wasm-bindgen ./target/wasm32-unknown-unknown/debug/client.wasm --out-dir ./client/js/wasm
+npm run --prefix ./client/js build
+
+cp ./target/debug/server.exe ./www
