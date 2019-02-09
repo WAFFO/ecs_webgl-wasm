@@ -111,19 +111,21 @@ impl Renderer {
             self.canvas.width() as f32,
             self.canvas.height() as f32,
         );
-        let mut view = Renderer::build_view(&world);
+        let (view_pos, view_target) = Renderer::get_view(&world);
 
         // basic_shader
         self.shader.use_shader(&self.context);
         self.shader.set_mat4(&self.context,"u_projection", &mut proj);
-        self.shader.set_mat4(&self.context,"u_view", &mut view);
+        self.shader.set_vec3_xyz(&self.context,"u_view_pos", view_pos.x, view_pos.y, view_pos.z);
+        self.shader.set_vec3_xyz(&self.context,"u_view_target", view_target.x, view_target.y, view_target.z);
 
         self.draw_solids(world, mesh_manager);
 
         // ls_shader
         self.ls_shader.use_shader(&self.context);
         self.ls_shader.set_mat4(&self.context,"u_projection", &mut proj);
-        self.ls_shader.set_mat4(&self.context,"u_view", &mut view);
+        self.ls_shader.set_vec3_xyz(&self.context,"u_view_pos", view_pos.x, view_pos.y, view_pos.z);
+        self.ls_shader.set_vec3_xyz(&self.context,"u_view_target", view_target.x, view_target.y, view_target.z);
 
         self.draw_lights(world, mesh_manager);
 
@@ -222,25 +224,24 @@ impl Renderer {
         glm::perspective( width/height, 45.0, 0.1, 200.0)
     }
 
-    fn build_view(world: &World) -> glm::Mat4 {
+    fn get_view(world: &World) -> (glm::Vec3, glm::Vec3) {
         let _camera_storage = world.read_storage::<components::Camera>();
 
-        let mut result = glm::Mat4::identity();
+        let mut result = (
+            vec3(0.0, 0.0, 0.0),
+            vec3(0.0, 0.0, 0.0),
+        );
 
         // TODO, avoid using a loop? .get() .get_unchecked()
         for camera in (&_camera_storage).join() {
-            result = glm::look_at(
-                &(camera.target+camera.rotation),
-                &camera.target,
-                &vec3(0.0, 1.0, 0.0),
-            );
+            result = (camera.target+camera.rotation,camera.target);
             break;
         }
 
         result
     }
 
-    fn build_vectors<'a>(transform: &'a Transform, mesh: &'a StaticMesh, mesh_manager: &'a MeshManager
+    fn get_vectors<'a>(transform: &'a Transform, mesh: &'a StaticMesh, mesh_manager: &'a MeshManager
     ) -> Option<(MeshIndex, &'a glm::Vec3, &'a glm::Vec3, &'a glm::Vec3)> {
         if let Some(mesh_index) = mesh_manager.get(&mesh.mesh_id) {
             Some((
@@ -284,7 +285,7 @@ impl Renderer {
 
         for (transform, mesh, _) in (&_transform_storage, &_mesh_storage, &_solid_storage).join() {
 
-            if let Some((mesh_index, pos, rot, scl)) = Renderer::build_vectors(&transform, &mesh, &mesh_manager) {
+            if let Some((mesh_index, pos, rot, scl)) = Renderer::get_vectors(&transform, &mesh, &mesh_manager) {
 
                 // model data
                 self.shader.set_vec3_xyz(&self.context, "u_translation", pos.x, pos.y, pos.z);
@@ -309,7 +310,7 @@ impl Renderer {
 
         for (transform, mesh, light) in (&_transform_storage, &_mesh_storage, &_light_storage).join() {
 
-            if let Some((mesh_index, pos, rot, scl)) = Renderer::build_vectors(&transform, &mesh, &mesh_manager) {
+            if let Some((mesh_index, pos, rot, scl)) = Renderer::get_vectors(&transform, &mesh, &mesh_manager) {
 
                 // model data
                 self.ls_shader.set_vec3_xyz(&self.context, "u_translation", pos.x, pos.y, pos.z);
