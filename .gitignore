@@ -4,5 +4,8 @@ webgl_bg.js
 webgl_bg.wasm
 .idea
 target
-www/wasm/*
-www/node_modules/*
+client/js/wasm/*
+client/js/node_modules/*
+www/*
+
+!.gitkeep
