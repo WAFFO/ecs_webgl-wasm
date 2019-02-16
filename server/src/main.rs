@@ -1,9 +1,8 @@
-#![deny(warnings)]
-extern crate pretty_env_logger;
 extern crate warp;
 
-fn main() {
-    pretty_env_logger::init();
+use warp::Filter;
 
-    warp::serve(warp::fs::dir("./static/")).run(([127, 0, 0, 1], 8080));
+fn main() {
+    let routes = warp::any().map(|| "Hello, World!");
+    warp::serve(routes).run(([127, 0, 0, 1], 8888));
 }
