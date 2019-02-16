@@ -19,5 +19,10 @@ module.exports = {
           TextEncoder: ['text-encoding', 'TextEncoder']
         })
     ],
+    devServer: {
+        proxy: {
+          '/api': 'http://localhost:8888'
+        }
+    },
     mode: 'development'
 };
