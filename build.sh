@@ -14,6 +14,13 @@ cargo build -p client --target wasm32-unknown-unknown
 cargo build -p server
 
 wasm-bindgen ./target/wasm32-unknown-unknown/debug/client.wasm --out-dir ./client/js/wasm
-npm run --prefix ./client/js build
+npm run --prefix ./client/js build || STATUS=$? && true ;
+
+if [[ "$STATUS" -ne "0" ]]; then
+    cd client/js
+    npm install
+    cd ../..
+    npm run --prefix ./client/js build
+fi
 
 cp ./target/debug/server.exe ./www
