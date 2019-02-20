@@ -1,4 +1,3 @@
-// update this file name with name in Cargo.toml
 (async () => {
     const webGL = await import('./wasm/client.js');
 
