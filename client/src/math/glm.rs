@@ -31,6 +31,6 @@ pub fn look_at(pos: Vert3, target: Vert3, up: Vert3) -> Mat4 {
         Vert4::vert4(xaxis, 0.0),
         Vert4::vert4(yaxis, 0.0),
         Vert4::vert4(zaxis, 0.0),
-        Vert4::new(xaxis.dot(&pos) * -1, yaxis.dot(&pos) * -1, zaxis.dot(&pos) * -1, 1.0),
+        Vert4::new(xaxis.dot(&pos) * -1.0, yaxis.dot(&pos) * -1.0, zaxis.dot(&pos) * -1.0, 1.0),
     )
 }
