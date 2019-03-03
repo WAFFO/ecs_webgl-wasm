@@ -17,12 +17,8 @@ impl<'a> System<'a> for UpdatePosition {
         let delta = delta.0;
 
         for (pos, vel) in (&mut pos, &vel).join() {
-            pos.translation[0] += vel.translation[0] * delta;
-            pos.translation[1] += vel.translation[1] * delta;
-            pos.translation[2] += vel.translation[2] * delta;
-            pos.rotation[0] += vel.rotation[0] * delta;
-            pos.rotation[1] += vel.rotation[1] * delta;
-            pos.rotation[2] += vel.rotation[2] * delta;
+            pos.translation += vel.translation * delta;
+            pos.rotation += vel.rotation * delta;
         }
     }
 }

@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use web_sys::{WebGlProgram, WebGl2RenderingContext, WebGlShader, WebGlUniformLocation};
-use glm::{value_ptr_mut};
+use crate::math;
 
 pub struct Shader {
     program: WebGlProgram,
@@ -98,57 +98,57 @@ impl Shader {
         context.uniform1f(Some(&self.get_uniform_location(&context, name)), value);
     }
 
-    pub fn set_vec2(&mut self, context: &WebGl2RenderingContext, name: &'static str, value: &mut glm::Vec2) {
-        context.uniform2fv_with_f32_array(
-            Some(&self.get_uniform_location(&context, name)),
-            &mut (value_ptr_mut(value)),
-        );
-    }
-    pub fn set_vec2_xy(&mut self, context: &WebGl2RenderingContext, name: &'static str, x: f32, y: f32) {
-        context.uniform2f(Some(&self.get_uniform_location(&context, name)), x, y);
-    }
+//    pub fn set_vec2(&mut self, context: &WebGl2RenderingContext, name: &'static str, value: &mut glm::Vec2) {
+//        context.uniform2fv_with_f32_array(
+//            Some(&self.get_uniform_location(&context, name)),
+//            value.data_ref_mut()),
+//        );
+//    }
+//    pub fn set_vec2_xy(&mut self, context: &WebGl2RenderingContext, name: &'static str, x: f32, y: f32) {
+//        context.uniform2f(Some(&self.get_uniform_location(&context, name)), x, y);
+//    }
 
-    pub fn set_vec3(&mut self, context: &WebGl2RenderingContext, name: &'static str, value: &mut glm::Vec3) {
+    pub fn set_vec3(&mut self, context: &WebGl2RenderingContext, name: &'static str, value: &mut math::Vert3) {
         context.uniform3fv_with_f32_array(
             Some(&self.get_uniform_location(&context, name)),
-            &mut (value_ptr_mut(value)),
+            value.data_ref_mut(),
         );
     }
     pub fn set_vec3_xyz(&mut self, context: &WebGl2RenderingContext, name: &'static str, x: f32, y: f32, z: f32) {
         context.uniform3f(Some(&self.get_uniform_location(&context, name)), x, y, z);
     }
 
-    pub fn set_vec4(&mut self, context: &WebGl2RenderingContext, name: &'static str, value: &mut glm::Vec4) {
+    pub fn set_vec4(&mut self, context: &WebGl2RenderingContext, name: &'static str, value: &mut math::Vert4) {
         context.uniform4fv_with_f32_array(
             Some(&self.get_uniform_location(&context, name)),
-            &mut (value_ptr_mut(value)),
+            value.data_ref_mut(),
         );
     }
     pub fn set_vec4_xyzw(&mut self, context: &WebGl2RenderingContext, name: &'static str, x: f32, y: f32, z: f32, w: f32) {
         context.uniform4f(Some(&self.get_uniform_location(&context, name)), x, y, z, w);
     }
 
-    pub fn set_mat2(&mut self, context: &WebGl2RenderingContext, name: &'static str, mat: &mut glm::Mat2) {
-        context.uniform_matrix2fv_with_f32_array(
-            Some(&self.get_uniform_location(&context, name)),
-            false,
-            &mut (value_ptr_mut(mat)),
-        );
-    }
+//    pub fn set_mat2(&mut self, context: &WebGl2RenderingContext, name: &'static str, mat: &mut glm::Mat2) {
+//        context.uniform_matrix2fv_with_f32_array(
+//            Some(&self.get_uniform_location(&context, name)),
+//            false,
+//            mat.data_ref_mut(),
+//        );
+//    }
 
-    pub fn set_mat3(&mut self, context: &WebGl2RenderingContext, name: &'static str, mat: &mut glm::Mat3) {
+    pub fn set_mat3(&mut self, context: &WebGl2RenderingContext, name: &'static str, mat: &mut math::Mat3) {
         context.uniform_matrix3fv_with_f32_array(
             Some(&self.get_uniform_location(&context, name)),
             false,
-            &mut (value_ptr_mut(mat)),
+            mat.data_ref_mut(),
         );
     }
 
-    pub fn set_mat4(&mut self, context: &WebGl2RenderingContext, name: &'static str, mat: &mut glm::Mat4) {
+    pub fn set_mat4(&mut self, context: &WebGl2RenderingContext, name: &'static str, mat: &mut math::Mat4) {
         context.uniform_matrix4fv_with_f32_array(
             Some(&self.get_uniform_location(&context, name)),
             false,
-            &mut (value_ptr_mut(mat)),
+            mat.data_ref_mut(),
         );
     }
 

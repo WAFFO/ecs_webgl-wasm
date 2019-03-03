@@ -17,6 +17,7 @@ use input::KeyMap;
 use input::Key::*;
 use renderer::Renderer;
 use timer::Timer;
+use math::{Vert3,Vert4};
 
 
 // Engine
@@ -85,9 +86,9 @@ impl Engine {
             test_light(
                 &mut self.world,
                 self.mesh_manager.load(String::from("debug_color_box")),
-                vec![ 0.0, 0.0, 0.0 ],
+                Vert3::new(0.0, 0.0, 0.0),
                 0.5,
-                vec![ 1.0, 0.0, -0.45 ],
+                Vert3::new( 1.0, 0.0, -0.45 ),
             )
         );
 
@@ -99,9 +100,9 @@ impl Engine {
                             test_solid(
                                 &mut self.world,
                                 self.mesh_manager.load(String::from("debug_color_box")),
-                                vec![6.0 * i as f32, 6.0 * k as f32, 6.0 * l as f32],
+                                Vert3::new(6.0 * i as f32, 6.0 * k as f32, 6.0 * l as f32),
                                 1.0,
-                                vec![1.0, 0.0, -0.45],
+                                Vert3::new(1.0, 0.0, -0.45),
                             )
                         );
                     }
@@ -115,7 +116,7 @@ impl Engine {
                 &mut self.world,
                 0.0,
                 PI,
-                vec3( 0.0,0.0,0.0 ),
+                Vert3::new( 0.0,0.0,0.0 ),
             )
         );
 
@@ -165,10 +166,10 @@ impl Engine {
         let mut _camera_storage = self.world().write_storage::<Camera>();
 
         for camera in (&mut _camera_storage).join() {
-            let forward : Vec3
-                = normalize(&camera.rotation);
-            let right : Vec3
-                = normalize(&cross::<f32,U1>(&camera.rotation, &vec3(0.0, 1.0, 0.0)));
+            let forward : Vert3
+                = camera.rotation.normalize();
+            let right : Vert3
+                = camera.rotation.cross(&Vert3::new(0.0, 1.0, 0.0)).normalize();
 
             if self.keys.get(FORWARD) {
                 camera.target -= forward * self.delta() * velocity;

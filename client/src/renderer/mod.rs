@@ -3,8 +3,7 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use web_sys::{HtmlCanvasElement, WebGlProgram, WebGlBuffer, WebGl2RenderingContext, WebGlShader, WebGlUniformLocation, WebGlVertexArrayObject};
 use specs::{World, Join};
-use glm;
-use glm::vec3;
+//use glm;
 
 mod shader;
 
@@ -12,6 +11,8 @@ use self::shader::Shader;
 use engine::components;
 use engine::components::{Transform, StaticMesh, Solid, Light};
 use engine::mesh_manager::{MeshManager, mesh::MeshIndex};
+use math::{Vert3, Vert4, Mat4};
+use math::glm;
 use javascript::get_canvas;
 
 pub struct Renderer {
@@ -116,16 +117,16 @@ impl Renderer {
         // basic_shader
         self.shader.use_shader(&self.context);
         self.shader.set_mat4(&self.context,"u_projection", &mut proj);
-        self.shader.set_vec3_xyz(&self.context,"u_view_pos", view_pos.x, view_pos.y, view_pos.z);
-        self.shader.set_vec3_xyz(&self.context,"u_view_target", view_target.x, view_target.y, view_target.z);
+        self.shader.set_vec3_xyz(&self.context,"u_view_pos", view_pos.x(), view_pos.y(), view_pos.z());
+        self.shader.set_vec3_xyz(&self.context,"u_view_target", view_target.x(), view_target.y(), view_target.z());
 
         self.draw_solids(world, mesh_manager);
 
         // ls_shader
         self.ls_shader.use_shader(&self.context);
         self.ls_shader.set_mat4(&self.context,"u_projection", &mut proj);
-        self.ls_shader.set_vec3_xyz(&self.context,"u_view_pos", view_pos.x, view_pos.y, view_pos.z);
-        self.ls_shader.set_vec3_xyz(&self.context,"u_view_target", view_target.x, view_target.y, view_target.z);
+        self.ls_shader.set_vec3_xyz(&self.context,"u_view_pos", view_pos.x(), view_pos.y(), view_pos.z());
+        self.ls_shader.set_vec3_xyz(&self.context,"u_view_target", view_target.x(), view_target.y(), view_target.z());
 
         self.draw_lights(world, mesh_manager);
 
@@ -220,16 +221,16 @@ impl Renderer {
         Ok(())
     }
 
-    fn build_projection(width: f32, height: f32) -> glm::Mat4 {
+    fn build_projection(width: f32, height: f32) -> Mat4 {
         glm::perspective( width/height, 45.0, 0.1, 200.0)
     }
 
-    fn get_view(world: &World) -> (glm::Vec3, glm::Vec3) {
+    fn get_view(world: &World) -> (Vert3, Vert3) {
         let _camera_storage = world.read_storage::<components::Camera>();
 
         let mut result = (
-            vec3(0.0, 0.0, 0.0),
-            vec3(0.0, 0.0, 0.0),
+            Vert3::new(0.0, 0.0, 0.0),
+            Vert3::new(0.0, 0.0, 0.0),
         );
 
         // TODO, avoid using a loop? .get() .get_unchecked()
@@ -241,14 +242,14 @@ impl Renderer {
         result
     }
 
-    fn get_vectors<'a>(transform: &'a Transform, mesh: &'a StaticMesh, mesh_manager: &'a MeshManager
-    ) -> Option<(MeshIndex, &'a Vec<f32>, &'a Vec<f32>, &'a Vec<f32>)> {
+    fn get_vectors(transform: &Transform, mesh: &StaticMesh, mesh_manager: &MeshManager
+    ) -> Option<(MeshIndex, Vert3, Vert3, Vert3)> {
         if let Some(mesh_index) = mesh_manager.get(&mesh.mesh_id) {
             Some((
                 mesh_index,
-                &transform.translation,
-                &transform.rotation,
-                &transform.scale,
+                transform.translation,
+                transform.rotation,
+                transform.scale,
             ))
         }
         else {
@@ -256,14 +257,14 @@ impl Renderer {
         }
     }
 
-    fn get_lights(world: &World) -> Vec<(Vec<f32>, glm::Vec4)> {
+    fn get_lights(world: &World) -> Vec<(Vert3, Vert4)> {
         let _transform_storage = world.read_storage::<Transform>();
         let _light_storage = world.read_storage::<Light>();
 
-        let mut list: Vec<(Vec<f32>, glm::Vec4)> = Vec::new();
+        let mut list: Vec<(Vert3, Vert4)> = Vec::new();
 
         for (transform, light) in (&_transform_storage, &_light_storage).join() {
-            list.push((transform.translation.clone(), light.color));
+            list.push((transform.translation, light.color));
         }
 
         list
@@ -276,7 +277,7 @@ impl Renderer {
         if !lights.is_empty() {
             let (pos, color) = lights.get(0).unwrap();
             self.shader.set_vec3_xyz(&self.context, "u_light_pos",pos[0], pos[1], pos[2]);
-            self.shader.set_vec3_xyz(&self.context, "u_light_color", color.x, color.y, color.z);
+            self.shader.set_vec3_xyz(&self.context, "u_light_color", color.x(), color.y(), color.z());
         }
 
         let _transform_storage = world.read_storage::<Transform>();

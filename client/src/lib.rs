@@ -18,6 +18,7 @@ pub mod renderer;
 pub mod timer;
 pub mod javascript;
 pub mod input;
+pub mod math;
 
 use engine::Engine;
 
