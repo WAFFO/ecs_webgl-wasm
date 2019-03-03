@@ -28,9 +28,9 @@ pub fn look_at(pos: Vert3, target: Vert3, up: Vert3) -> Mat4 {
     let yaxis: Vert3 = zaxis.cross(&xaxis).normalize();
 
     Mat4::new(
-        Vert4::vert4(xaxis, 0.0),
-        Vert4::vert4(yaxis, 0.0),
-        Vert4::vert4(zaxis, 0.0),
+        Vert4::new(xaxis[0], yaxis[0], zaxis[0], 0.0),
+        Vert4::new(yaxis[1], yaxis[1], zaxis[1], 0.0),
+        Vert4::new(zaxis[2], yaxis[2], zaxis[2], 0.0),
         Vert4::new(xaxis.dot(&pos) * -1.0, yaxis.dot(&pos) * -1.0, zaxis.dot(&pos) * -1.0, 1.0),
     )
 }

@@ -216,9 +216,9 @@ impl std::ops::IndexMut<(usize,usize)> for Mat4 {
 impl From<Vert3> for Mat3 {
     fn from(f: Vert3) -> Self {
         Mat3 ( [
-            f[0],   0.0,   0.0,
-              0.0, f[1],   0.0,
-              0.0,   0.0, f[2],
+            f[0],  0.0,  0.0,
+             0.0, f[1],  0.0,
+             0.0,  0.0, f[2],
         ] )
     }
 }
@@ -226,10 +226,10 @@ impl From<Vert3> for Mat3 {
 impl From<Vert4> for Mat4 {
     fn from(f: Vert4) -> Self {
         Mat4 ( [
-            f[0],   0.0,   0.0,   0.0,
-              0.0, f[1],   0.0,   0.0,
-              0.0,   0.0, f[2],   0.0,
-              0.0,   0.0,   0.0, f[3],
+            f[0],  0.0,  0.0,  0.0,
+             0.0, f[1],  0.0,  0.0,
+             0.0,  0.0, f[2],  0.0,
+             0.0,  0.0,  0.0, f[3],
         ] )
     }
 }
