@@ -34,3 +34,48 @@ pub fn look_at(pos: Vert3, target: Vert3, up: Vert3) -> Mat4 {
         Vert4::new(xaxis.dot(&pos) * -1.0, yaxis.dot(&pos) * -1.0, zaxis.dot(&pos) * -1.0, 1.0),
     )
 }
+
+pub fn translate(t: Vert3) -> Mat4 {
+    Mat4([
+         1.0,  0.0,  0.0, 0.0,
+         0.0,  1.0,  0.0, 0.0,
+         0.0,  0.0,  1.0, 0.0,
+        t[0], t[1], t[2], 1.0,
+    ])
+}
+
+pub fn rotate_x(f: FSize) -> Mat4 {
+    Mat4([
+        1.0, 0.0, 0.0, 0.0,
+        0.0, f.cos(), -f.sin(), 0.0,
+        0.0, f.sin(), f.cos(), 0.0,
+        0.0, 0.0, 0.0, 1.0,
+    ])
+}
+
+pub fn rotate_y(f: FSize) -> Mat4 {
+    Mat4([
+        f.cos(), 0.0, -f.sin(), 0.0,
+        0.0, 1.0, 0.0, 0.0,
+        f.sin(), 0.0, f.cos(), 0.0,
+        0.0, 0.0, 0.0, 1.0,
+    ])
+}
+
+pub fn rotate_z(f: FSize) -> Mat4 {
+    Mat4([
+        f.cos(), -f.sin(), 0.0, 0.0,
+        f.sin(), f.cos(), 0.0, 0.0,
+        0.0, 0.0, 1.0, 0.0,
+        0.0, 0.0, 0.0, 1.0,
+    ])
+}
+
+pub fn scale(s: Vert3) -> Mat4 {
+    Mat4([
+        s[0],  0.0,  0.0, 0.0,
+         0.0, s[1],  0.0, 0.0,
+         0.0,  0.0, s[2], 0.0,
+         0.0,  0.0,  0.0, 1.0,
+    ])
+}
