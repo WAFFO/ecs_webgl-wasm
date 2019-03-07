@@ -3,7 +3,6 @@ extern crate wasm_bindgen;
 extern crate js_sys;
 extern crate web_sys;
 extern crate specs;
-extern crate nalgebra_glm as glm;
 
 use wasm_bindgen::prelude::*;
 use std::panic;

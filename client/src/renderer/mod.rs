@@ -222,7 +222,7 @@ impl Renderer {
     }
 
     fn build_projection(width: f32, height: f32) -> Mat4 {
-        glm::perspective( width/height, 45.0, 0.1, 200.0)
+        glm::perspective( width/height, 75.0, 0.1, 200.0)
     }
 
     fn get_view(world: &World) -> (Vert3, Vert3) {

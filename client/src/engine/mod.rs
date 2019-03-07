@@ -1,6 +1,5 @@
 use wasm_bindgen::prelude::*;
 use specs::{World, Entity, Join};
-use glm::{Vec3,vec3,normalize,cross,U1};
 
 pub mod components;
 pub mod entities;
