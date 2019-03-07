@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use wasm_bindgen;
+use wasm_bindgen::prelude::*;
 use specs::{Join};
 
 use Engine;
