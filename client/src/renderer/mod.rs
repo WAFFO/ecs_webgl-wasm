@@ -243,13 +243,15 @@ impl Renderer {
     }
 
     fn get_vectors(transform: &Transform, mesh: &StaticMesh, mesh_manager: &MeshManager
-    ) -> Option<(MeshIndex, Vert3, Vert3, Vert3)> {
+    ) -> Option<(MeshIndex, Mat4)> {
         if let Some(mesh_index) = mesh_manager.get(&mesh.mesh_id) {
             Some((
                 mesh_index,
-                transform.translation,
-                transform.rotation,
-                transform.scale,
+                 glm::translate(transform.translation)
+                 * glm::rotate_x(transform.rotation[0])
+                 * glm::rotate_y(transform.rotation[1])
+                 * glm::rotate_z(transform.rotation[2])
+                 * glm::scale(transform.scale),
             ))
         }
         else {
@@ -286,12 +288,11 @@ impl Renderer {
 
         for (transform, mesh, _) in (&_transform_storage, &_mesh_storage, &_solid_storage).join() {
 
-            if let Some((mesh_index, pos, rot, scl)) = Renderer::get_vectors(&transform, &mesh, &mesh_manager) {
+            if let Some((mesh_index, model)) = Renderer::get_vectors(&transform, &mesh, &mesh_manager) {
 
+                let mut model = model;
                 // model data
-                self.shader.set_vec3_xyz(&self.context, "u_translation", pos[0], pos[1], pos[2]);
-                self.shader.set_vec3_xyz(&self.context, "u_rotation", rot[0], rot[1], rot[2]);
-                self.shader.set_vec3_xyz(&self.context, "u_scale", scl[0], scl[1], scl[2]);
+                self.shader.set_mat4(&self.context, "u_model", &mut model);
 
                 // Draw our shape (Triangles, first_index, count) Our vertex shader will run $count times.
                 self.context.draw_arrays(
@@ -311,12 +312,11 @@ impl Renderer {
 
         for (transform, mesh, light) in (&_transform_storage, &_mesh_storage, &_light_storage).join() {
 
-            if let Some((mesh_index, pos, rot, scl)) = Renderer::get_vectors(&transform, &mesh, &mesh_manager) {
+            if let Some((mesh_index, model)) = Renderer::get_vectors(&transform, &mesh, &mesh_manager) {
 
+                let mut model = model;
                 // model data
-                self.ls_shader.set_vec3_xyz(&self.context, "u_translation", pos[0], pos[1], pos[2]);
-                self.ls_shader.set_vec3_xyz(&self.context, "u_rotation", rot[0], rot[1], rot[2]);
-                self.ls_shader.set_vec3_xyz(&self.context, "u_scale", scl[0], scl[1], scl[2]);
+                self.ls_shader.set_mat4(&self.context, "u_model", &mut model);
 
                 let mut color = light.color;
 
