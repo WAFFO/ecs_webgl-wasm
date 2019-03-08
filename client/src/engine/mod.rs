@@ -91,9 +91,9 @@ impl Engine {
             )
         );
 
-        for i in -3..4 {
-            for k in -3..4 {
-                for l in -3..4 {
+        for i in -4..5 {
+            for k in -4..5 {
+                for l in -4..5 {
                     if i != 0 || k != 0 || l != 0 {
                         self.entities.push(
                             test_solid(
