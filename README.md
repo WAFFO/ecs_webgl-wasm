@@ -2,6 +2,8 @@
 
 Preview: https://WAFFO.github.io
 
+**Note!** This is currently being refactored for better structure in another repository. Changes will be brought here shortly.
+
 Structured to be as simple as possible to get started. Requires [rustup](https://www.rust-lang.org/en-US/install.html) and [npm](https://nodejs.org/en/).
 
 First, build with:
